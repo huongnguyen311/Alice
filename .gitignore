@@ -1,0 +1,26 @@
+# Credentials & secrets — never commit these
+credentials/
+
+# Runtime data — logs, outputs, tokens
+data/
+
+# Alice personal config — gitignored (copy from *.example files in config/)
+config/install-config.json
+config/skill-personal.json
+
+# Claude Code local settings & runtime files
+.claude/settings.local.json
+.claude/scheduled_tasks.lock
+.mcp.json
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+
+# OS
+.DS_Store
+Thumbs.db
