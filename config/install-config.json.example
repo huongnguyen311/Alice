@@ -58,6 +58,14 @@
       "mcp_required": null,
       "warning": null,
       "enabled": true
+    },
+    {
+      "name": "alice-connection-check",
+      "file": "alice-connection-check.md",
+      "type": "python",
+      "mcp_required": null,
+      "warning": "MCP checks (Gmail, Calendar, Odoo) only work in claude.ai web app by default — configure local MCP servers for CLI use",
+      "enabled": true
     }
   ]
 }

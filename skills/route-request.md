@@ -59,6 +59,7 @@ Known trigger patterns (from skill frontmatter):
 | `alice-daily-email-recap.md` | email | "email recap", "inbox summary", "daily digest", "unread emails" |
 | `alice-odoo-tasks.md` | odoo | "create a task", "add a task", "new task in", "odoo task", "task in the project", "update the task", "move task to", "mark task as", "show tasks", "find the task", "change task status" |
 | `alice-odoo-task-notes.md` | odoo | "save notes to task", "add notes to the task", "log this to the task", "task notes", "update task description", "add content to task" |
+| `alice-connection-check.md` | core | "connection check", "check connection", "check connections", "service status", "are services connected", "is alice connected", "check integrations", "verify connections", "ping services" |
 
 > Update this table whenever a new skill is added with `triggers:` frontmatter.
 
