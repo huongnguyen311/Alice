@@ -71,7 +71,7 @@ First use `ToolSearch` to fetch the `mcp__odoo__odoo_count` schema (query: `"sel
 > **Why:** Odoo MCP tools are deferred — they must be fetched via ToolSearch before they can be called. Skipping this step causes a false "not found" error even when Odoo is correctly set up.
 
 - Returns a number → `Odoo MCP: ✅ OK (<N> projects found)` — regardless of whether the config is global or project-scoped
-- ToolSearch returns no results → `Odoo MCP: ❌ NOT CONFIGURED` — the MCP server is not registered or not reachable from this session. Check `.claude.json` or `~/.claude/settings.json`.
+- ToolSearch returns no results → `Odoo MCP: ⚠️ NOT IN SCOPE` — Odoo MCP is project-scoped. This check was run outside the Alice project directory. **Open Claude Code inside the Alice project and re-run the check.** If you are already inside the Alice project and still see this, check `.claude.json` to confirm the `odoo` MCP server entry exists.
 - Call errors after schema loaded → `Odoo MCP: ❌ UNAVAILABLE` — server reachable but call failed. Check the bearer token in `.claude.json`.
 
 ### 5. Local Google API credentials
