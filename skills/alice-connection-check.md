@@ -28,9 +28,9 @@ Checks the connectivity and reachability of Alice's integrated services. Reports
 | Service | Check Method | Healthy Signal |
 |---|---|---|
 | **Internet** | Fetch a known reliable URL (e.g. `https://www.google.com`) | HTTP 200 |
-| **Gmail (MCP)** | Call `mcp__claude_ai_Gmail__gmail_get_profile` | Returns email address |
-| **Google Calendar (MCP)** | Call `mcp__claude_ai_Google_Calendar__authenticate` | No error |
-| **Odoo (MCP)** | Call `mcp__odoo__odoo_count` with model `project.project` | Returns a number |
+| **Gmail (MCP)** | ToolSearch schema → call `mcp__claude_ai_Gmail__gmail_get_profile` | Returns email address |
+| **Google Calendar (MCP)** | ToolSearch schema → call `mcp__claude_ai_Google_Calendar__authenticate` | No error |
+| **Odoo (MCP)** | ToolSearch schema → call `mcp__odoo__odoo_count` with model `project.project` | Returns a number |
 | **Google API (Python/local)** | Check file exists: `{ALICE_ROOT}/credentials/google_token.json` | File present |
 
 ---
@@ -46,24 +46,33 @@ Use the `WebFetch` tool to fetch `https://www.google.com`.
 
 ### 2. Gmail MCP
 
-Call `mcp__claude_ai_Gmail__gmail_get_profile`.
+Use `ToolSearch` (query: `"select:mcp__claude_ai_Gmail__gmail_get_profile"`) to fetch the schema, then call `mcp__claude_ai_Gmail__gmail_get_profile`.
+
+> **Why:** Gmail MCP tools are deferred — ToolSearch must be called first or the tool will falsely appear unconfigured.
 
 - Returns a profile with an email → `Gmail MCP: OK (connected as <email>)`
-- Error or no response → `Gmail MCP: UNAVAILABLE`
+- ToolSearch returns no results → `Gmail MCP: NOT CONFIGURED`
+- Call errors after schema loaded → `Gmail MCP: UNAVAILABLE`
 
 ### 3. Google Calendar MCP
 
-Call `mcp__claude_ai_Google_Calendar__authenticate`.
+Use `ToolSearch` (query: `"select:mcp__claude_ai_Google_Calendar__authenticate"`) to fetch the schema, then call `mcp__claude_ai_Google_Calendar__authenticate`.
+
+> **Why:** Same deferred-tool pattern as Gmail.
 
 - Succeeds → `Google Calendar MCP: OK`
-- Error → `Google Calendar MCP: UNAVAILABLE`
+- ToolSearch returns no results → `Google Calendar MCP: NOT CONFIGURED`
+- Call errors after schema loaded → `Google Calendar MCP: UNAVAILABLE`
 
 ### 4. Odoo MCP
 
-Call `mcp__odoo__odoo_count` with `{"model": "project.project", "domain": []}`.
+First use `ToolSearch` to fetch the `mcp__odoo__odoo_count` schema (query: `"select:mcp__odoo__odoo_count"`), then call it with `{"model": "project.project", "domain": []}`.
 
-- Returns a number → `Odoo MCP: OK (<N> projects found)`
-- Error or no response → `Odoo MCP: UNAVAILABLE`
+> **Why:** Odoo MCP tools are deferred — they must be fetched via ToolSearch before they can be called. Skipping this step causes a false "not found" error even when Odoo is correctly set up.
+
+- Returns a number → `Odoo MCP: ✅ OK (<N> projects found)` — regardless of whether the config is global or project-scoped
+- ToolSearch returns no results → `Odoo MCP: ❌ NOT CONFIGURED` — the MCP server is not registered or not reachable from this session. Check `.claude.json` or `~/.claude/settings.json`.
+- Call errors after schema loaded → `Odoo MCP: ❌ UNAVAILABLE` — server reachable but call failed. Check the bearer token in `.claude.json`.
 
 ### 5. Local Google API credentials
 
