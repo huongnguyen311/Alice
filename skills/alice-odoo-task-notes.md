@@ -1,6 +1,6 @@
 ---
 name: alice-odoo-task-notes
-description: Format and save structured notes, meeting summaries, or decisions to an Odoo task description using a grep-friendly markdown template.
+description: Format and save structured notes, meeting summaries, or decisions to an Odoo task description via Alice using a grep-friendly markdown template.
 scope: odoo
 triggers:
   - "save notes to task"
@@ -18,14 +18,14 @@ mcp_required: odoo
 
 ## When to Use This Skill
 
-Use this skill (not `odoo-tasks.md`) when the user wants to **log prose content** to a task:
+Use this skill (not `alice-odoo-tasks.md`) when the user wants to **log prose content** to a task:
 - Meeting notes or call summaries
 - Decisions made
 - Blockers or issues discovered
 - Progress updates or handovers
 - Any content longer than a one-line status update
 
-For field changes (stage, deadline, assignee) → use `skills/odoo-tasks.md` instead.
+For field changes (stage, deadline, assignee) → use `skills/alice-odoo-tasks.md` instead.
 
 ---
 

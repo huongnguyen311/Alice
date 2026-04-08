@@ -1,6 +1,6 @@
 ---
 name: alice-odoo-tasks
-description: Create, read, update, and change the stage of Odoo project tasks. Asks clarifying questions before acting when info is missing.
+description: Create, read, update, and change the stage of Odoo project tasks via Alice. Asks clarifying questions before acting when info is missing.
 scope: odoo
 triggers:
   - "create a task"
@@ -26,7 +26,7 @@ mcp_required: odoo
 
 Use this skill when the user wants to **act on a task** in Odoo: create, find, update fields, or move to a different stage.
 
-For logging notes, meeting summaries, or structured content to a task → use `skills/odoo-task-notes.md` instead.
+For logging notes, meeting summaries, or structured content to a task → use `skills/alice-odoo-task-notes.md` instead.
 
 ---
 
@@ -131,7 +131,7 @@ Stages are **project-specific** in Odoo — always discover before writing.
 | `stage_id` | many2one | Link to `project.task.type` (project-specific) |
 | `user_ids` | many2many | Assignees — use `[[6, 0, [id1, id2]]]` syntax to replace |
 | `date_deadline` | date | Format: `YYYY-MM-DD` |
-| `description` | html | Full description — use `odoo-task-notes.md` for structured content |
+| `description` | html | Full description — use `alice-odoo-task-notes.md` for structured content |
 | `priority` | selection | `"0"` = Normal, `"1"` = High |
 | `tag_ids` | many2many | Task tags |
 | `kanban_state` | selection | `normal`, `done`, `blocked` |

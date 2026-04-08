@@ -56,9 +56,9 @@ Known trigger patterns (from skill frontmatter):
 | `build-script.md` | automation | "write a script", "automate", "python script", "build a script" |
 | `run-automation.md` | automation | "run", "schedule", "cron", "recurring", "every day", "every week" |
 | `read-csv.md` | data | "csv", "analyse", "data file", "filter", "spreadsheet", "report on" |
-| `daily-email-recap.md` | email | "email recap", "inbox summary", "daily digest", "unread emails" |
-| `odoo-tasks.md` | odoo | "create a task", "add a task", "new task in", "odoo task", "task in the project", "update the task", "move task to", "mark task as", "show tasks", "find the task", "change task status" |
-| `odoo-task-notes.md` | odoo | "save notes to task", "add notes to the task", "log this to the task", "task notes", "update task description", "add content to task" |
+| `alice-daily-email-recap.md` | email | "email recap", "inbox summary", "daily digest", "unread emails" |
+| `alice-odoo-tasks.md` | odoo | "create a task", "add a task", "new task in", "odoo task", "task in the project", "update the task", "move task to", "mark task as", "show tasks", "find the task", "change task status" |
+| `alice-odoo-task-notes.md` | odoo | "save notes to task", "add notes to the task", "log this to the task", "task notes", "update task description", "add content to task" |
 
 > Update this table whenever a new skill is added with `triggers:` frontmatter.
 
@@ -146,7 +146,7 @@ Request received
 
 **"What emails did I get today?"**
 - Domain: email | Action: read | Complexity: simple (today only, list)
-- → Load skill: `daily-email-recap.md` → MCP: `mcp__claude_ai_Gmail__gmail_search_messages`
+- → Load skill: `alice-daily-email-recap.md` → MCP: `mcp__claude_ai_Gmail__gmail_search_messages`
 
 **"Summarise all emails from this week and flag anything urgent"**
 - Domain: email | Action: summarise/filter | Complexity: multi-step (many emails, conditional)
