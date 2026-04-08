@@ -1,2 +1,82 @@
-# Claude-alice
-Personal AI named Alice
+# Alice
+
+Alice is a personal AI assistant that lives entirely on your laptop. She helps with daily tasks, builds automations on request, and grows smarter over time — updating her own memory, skills, and context as she learns more about you.
+
+All data stays local. No cloud. No external databases.
+
+---
+
+## How Alice Works
+
+You talk to Alice in VS Code via Claude Code. Depending on what's needed, she operates in one of three modes:
+
+| Mode | Name | How it activates |
+|---|---|---|
+| 1 | **Inactive** | You speak — Alice responds, then waits |
+| 2 | **Active (MCP-triggered)** | An external tool or service wakes Alice via MCP |
+| 3 | **Active (Scheduled)** | A cron job runs a script automatically, no input needed |
+
+---
+
+## Structure
+
+```
+alice/
+├── memories/          # Who Alice is, who you are, what's happening now
+├── skills/            # Things Alice knows how to do
+├── mcp/               # External tools and integrations Alice has access to
+├── auto-scripts/      # Python scripts Alice writes and runs
+├── credentials/       # OAuth tokens and API keys — gitignored, never committed
+├── data/              # CSV files — structured data, logs, script output
+├── setup/             # One-time setup scripts (Google auth, etc.)
+├── server.py          # FastAPI server (run, schedule, memory, data endpoints)
+└── start.sh           # Start the server: bash start.sh
+```
+
+---
+
+## Memory
+
+Alice keeps three core memory files:
+
+| File | Purpose |
+|---|---|
+| [memories/user_profile.md](memories/user_profile.md) | Your preferences, personality, patterns |
+| [memories/alice_profile.md](memories/alice_profile.md) | Alice's character, tone, running modes |
+| [memories/living_context.md](memories/living_context.md) | Current focus, recent decisions, open questions |
+
+Alice updates memory when she detects a meaningful change, when you ask her to, or when a compact action is triggered.
+
+---
+
+## Skills
+
+Skills in `/skills/` are Markdown instruction files Alice reads to know how to handle certain tasks. They grow over time.
+
+| Skill | When it's used |
+|---|---|
+| [save-memory](skills/save-memory.md) | Remembering something important |
+| [build-script](skills/build-script.md) | Writing a new automation |
+| [read-csv](skills/read-csv.md) | Reading and summarising data |
+| [run-automation](skills/run-automation.md) | Running or scheduling a script |
+
+---
+
+## Starting Alice's Server
+
+Required for MCP-triggered and scheduled modes:
+
+```bash
+bash start.sh
+```
+
+Server runs at `http://localhost:8000`. API docs at `http://localhost:8000/docs`.
+
+---
+
+## Design Principles
+
+- **Incremental** — Alice grows smarter with every conversation
+- **Autonomous** — she updates herself without always being asked
+- **Local-first** — everything stays on your machine
+- **Markdown + CSV only** — no databases, no setup, human-readable files
