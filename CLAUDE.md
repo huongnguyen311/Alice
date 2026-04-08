@@ -185,6 +185,18 @@ The `description:` field controls implicit auto-loading — Claude Code loads a 
 
 **7. If a wrapper skill was created** — also add it to `capabilities.md` and install configs (pointing to the `-global.md` file).
 
+**8. If the skill checks service/connection status** — apply the project-scoped MCP rule:
+
+| MCP scope | Tool found + call succeeds? | Report as |
+|---|---|---|
+| Global (`~/.claude/settings.json`) | Yes | `✅ OK` |
+| Global (`~/.claude/settings.json`) | No | `❌ NOT CONFIGURED` |
+| Project-scoped (`.claude.json`) | Yes | `✅ OK` |
+| Project-scoped (`.claude.json`) | No (run from outside Alice) | `✅ OK (project-scoped — only active inside Alice project)` |
+| Project-scoped (`.claude.json`) | No (run from inside Alice) | `❌ NOT CONFIGURED — check .claude.json` |
+
+> **Why:** Global skills can be invoked from any project. Project-scoped MCPs (e.g. Odoo configured in Alice's `.claude.json`) won't be available in other sessions. This is correct behaviour — never report it as a failure.
+
 ## MCP Registry
 
 `/mcp/` documents all MCP servers and tools Alice has access to. Update this registry when new MCPs are introduced or discussed. **Also update `capabilities.md`** so Alice can route to the right tool dynamically.
