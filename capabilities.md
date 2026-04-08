@@ -38,16 +38,16 @@ This is Alice's **master routing index**. Scan this file first to identify which
 | Write a new automation script | "write a script", "automate", "python script" | `skills/build-script.md` |
 | Run or schedule a script | "run", "schedule", "trigger", "cron" | `skills/run-automation.md` |
 | Read, summarise, or analyse a CSV | "data", "csv", "log", "analyse", "report" | `skills/read-csv.md` |
-| Daily email digest | "email recap", "inbox summary", "daily digest" | `skills/daily-email-recap.md` |
-| Book, cancel, or reschedule a meeting | "book a meeting", "schedule", "cancel meeting", "reschedule", "move meeting" | `skills/book-meeting.md` |
+| Daily email digest | "email recap", "inbox summary", "daily digest" | `skills/alice-daily-email-recap.md` |
+| Book, cancel, or reschedule a meeting | "book a meeting", "schedule", "cancel meeting", "reschedule", "move meeting" | `skills/alice-book-meeting.md` |
 | Decide MCP vs Python script | multi-step, batch, loop, conditional, scheduled | `skills/mcp-or-script.md` |
-| Create, find, update, or change stage of Odoo tasks | "odoo task", "task in project", "create task", "add a task", "move task", "mark task", "show tasks", "find the task" | `skills/odoo-tasks.md` |
-| Save structured notes or content to an Odoo task | "task notes", "save notes to task", "log to task", "add content to task", "update task description" | `skills/odoo-task-notes.md` |
-| Install Alice skills globally | "install alice", "install alice skills", "make alice skills global" | `skills/install.md` |
-| Uninstall Alice global skills | "uninstall alice", "uninstall alice skills", "remove alice skills" | `skills/uninstall.md` |
-| Global wrapper: read/analyse CSV from any project (`/alice-read-csv`) | (same as read-csv) | `skills/read-csv-global.md` |
-| Global wrapper: build Alice automation script from any project (`/alice-build-script`) | (same as build-script) | `skills/build-script-global.md` |
-| Global wrapper: run/schedule Alice automation from any project (`/alice-run-automation`) | (same as run-automation) | `skills/run-automation-global.md` |
+| Create, find, update, or change stage of Odoo tasks | "odoo task", "task in project", "create task", "add a task", "move task", "mark task", "show tasks", "find the task" | `skills/alice-odoo-tasks.md` |
+| Save structured notes or content to an Odoo task | "task notes", "save notes to task", "log to task", "add content to task", "update task description" | `skills/alice-odoo-task-notes.md` |
+| Install Alice skills globally | "install alice", "install alice skills", "make alice skills global" | `skills/alice-install.md` |
+| Uninstall Alice global skills | "uninstall alice", "uninstall alice skills", "remove alice skills" | `skills/alice-uninstall.md` |
+| Global wrapper: read/analyse CSV from any project (`/alice-read-csv`) | (same as read-csv) | `skills/alice-read-csv.md` |
+| Global wrapper: build Alice automation script from any project (`/alice-build-script`) | (same as build-script) | `skills/alice-build-script.md` |
+| Global wrapper: run/schedule Alice automation from any project (`/alice-run-automation`) | (same as run-automation) | `skills/alice-run-automation.md` |
 
 > **Rule:** Skills with matching `triggers:` frontmatter are loaded implicitly (see `skills/route-request.md` Step 3). This table is the fallback when no trigger match is found. Do not preload all skills.
 

@@ -1,5 +1,5 @@
 ---
-name: uninstall
+name: alice-uninstall
 description: Uninstall Alice skills from ~/.claude/skills/, removing all symlinks/copies and the install manifest
 scope: meta
 triggers:

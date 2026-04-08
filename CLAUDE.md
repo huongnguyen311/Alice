@@ -51,7 +51,7 @@ alice/
 
 **When creating or editing a skill:**
 1. Use `{TOKEN}` for any personal data — never hardcode names, emails, paths, or platform-specific commands
-2. Document the token in `config/skill-personal.json.example` with a placeholder value
+2. Document the token in `config/skill-personal.json.example` with a placeholder value. **The key must exactly match the skill's `name` field in `install-config.json`** (e.g. `alice-book-meeting`, not `book-meeting`). A mismatch silently leaves tokens unresolved.
 3. Add the token substitution to `_apply_tokens()` in `auto-scripts/install.py` if it's a new token type
 
 ## Request Routing — Start Here Every Session
@@ -148,12 +148,14 @@ triggers:
   - "another trigger phrase"
 ---
 ```
+**Rule:** The filename (without `.md`) must exactly match the `name:` field — no exceptions. E.g. `skills/alice-odoo-tasks.md` → `name: alice-odoo-tasks`.
 
 **Naming convention:**
-- Internal skills (Alice-only): plain name — `read-csv`, `build-script`, `save-memory`
-- Global skills (installed to `~/.claude/skills/`): **always prefix with `alice-`** — `alice-read-csv`, `alice-build-script`
+- **Filename must match the `name:` field — no exceptions.** `skills/alice-book-meeting.md` must have `name: alice-book-meeting`. A mismatch breaks routing, install lookups, and cross-references.
+- Internal skills (Alice-only): plain name — `read-csv.md` / `name: read-csv`, `save-memory.md` / `name: save-memory`
+- Global skills (installed to `~/.claude/skills/`): **always prefix with `alice-`** — `alice-book-meeting.md` / `name: alice-book-meeting`
 - The `alice-` prefix prevents global skills from shadowing same-named skills in other projects
-- Wrapper files use `-global` suffix in their filename but `alice-` prefix in their `name:` field — e.g. `skills/read-csv-global.md` → `name: alice-read-csv`
+- Wrapper skills follow the same rule — `alice-build-script.md` / `name: alice-build-script`
 
 **Description scoping rule for global skills:**
 The `description:` field controls implicit auto-loading — Claude Code loads a skill whenever the description matches the user's request. For global skills this fires across ALL projects, so descriptions must be scoped to Alice:
@@ -173,7 +175,7 @@ The `description:` field controls implicit auto-loading — Claude Code loads a 
 |---|---|---|
 | Pure MCP (no file paths, no personal data) | ✅ Direct | Add to `config/install-config.json.example` with `"type": "mcp"` |
 | Uses `{ALICE_ROOT}` paths or personal tokens | ✅ Direct | Add with `"type": "python"` — install substitutes tokens |
-| References other Alice skills / memories / data | ✅ Via wrapper | Create `skills/<skill-name>-global.md` that delegates to the internal skill |
+| References other Alice skills / memories / data | ✅ Via wrapper | Create `skills/alice-<skill-name>.md` that delegates to the internal skill |
 | Alice-internal only (writes to `memories/`, routing logic) | ❌ Skip | Do not add to install config |
 
 **6. If globally installable — update install config:**

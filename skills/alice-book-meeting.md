@@ -100,4 +100,4 @@ Use `gcal_update_event`. Include the reason in the updated event description if 
 
 - Timezone is always `{TIMEZONE}` unless user specifies otherwise
 - Default meeting duration is {MEETING_DURATION_HOURS} hour(s) unless specified
-- Always add Google Meet if `{ADD_GOOGLE_MEET_FOR_EXTERNAL}` is true and the meeting is with external parties or remote attendees
+- Add Google Meet for external/remote attendees: `{ADD_GOOGLE_MEET_FOR_EXTERNAL}`

@@ -1,5 +1,5 @@
 ---
-name: install
+name: alice-install
 description: Install Alice skills as personal global skills at ~/.claude/skills/ so they are available in any Claude Code project on this machine
 scope: meta
 triggers:
@@ -139,7 +139,8 @@ Read and follow: `{ALICE_ROOT}/skills/<skill-name>.md`
      "my_token": "placeholder-value"
    }
    ```
-2. Add real values to `config/skill-personal.json` (gitignored)
+   **Naming rule:** The key must exactly match the skill's `name` field in `install-config.json` (e.g. `alice-book-meeting`, not `book-meeting`). The install script looks up personal data by skill name — a mismatch will silently leave tokens unresolved.
+2. Add real values to `config/skill-personal.json` (gitignored) using the same key
 3. Add substitution logic to `_apply_tokens()` in `auto-scripts/install.py`:
    ```python
    my_val = skill_personal.get("my_token", "")

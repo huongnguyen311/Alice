@@ -4,7 +4,7 @@
   "skills": [
     {
       "name": "alice-odoo-tasks",
-      "file": "odoo-tasks.md",
+      "file": "alice-odoo-tasks.md",
       "type": "mcp",
       "mcp_required": "odoo",
       "warning": null,
@@ -12,7 +12,7 @@
     },
     {
       "name": "alice-odoo-task-notes",
-      "file": "odoo-task-notes.md",
+      "file": "alice-odoo-task-notes.md",
       "type": "mcp",
       "mcp_required": "odoo",
       "warning": null,
@@ -20,7 +20,7 @@
     },
     {
       "name": "alice-book-meeting",
-      "file": "book-meeting.md",
+      "file": "alice-book-meeting.md",
       "type": "mcp",
       "mcp_required": "claude.ai Google Calendar",
       "warning": "MCP only works in claude.ai web app — install a local Google Calendar MCP server to use in Claude Code CLI",
@@ -28,7 +28,7 @@
     },
     {
       "name": "alice-daily-email-recap",
-      "file": "daily-email-recap.md",
+      "file": "alice-daily-email-recap.md",
       "type": "python",
       "mcp_required": null,
       "warning": null,
@@ -37,7 +37,7 @@
     {
       "_comment": "Wrapper skills — delegate to Alice's internal skills via {ALICE_ROOT} at runtime.",
       "name": "alice-read-csv",
-      "file": "read-csv-global.md",
+      "file": "alice-read-csv.md",
       "type": "python",
       "mcp_required": null,
       "warning": null,
@@ -45,7 +45,7 @@
     },
     {
       "name": "alice-build-script",
-      "file": "build-script-global.md",
+      "file": "alice-build-script.md",
       "type": "python",
       "mcp_required": null,
       "warning": null,
@@ -53,7 +53,7 @@
     },
     {
       "name": "alice-run-automation",
-      "file": "run-automation-global.md",
+      "file": "alice-run-automation.md",
       "type": "python",
       "mcp_required": null,
       "warning": null,
