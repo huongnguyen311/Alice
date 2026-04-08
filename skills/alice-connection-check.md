@@ -91,20 +91,31 @@ Report results in a single summary block:
 ```
 ## Alice — Connection Status [YYYY-MM-DD HH:MM]
 
-| Service                  | Status  | Detail                         |
-|--------------------------|---------|--------------------------------|
-| Internet                 | ✅ OK   |                                |
-| Gmail MCP                | ✅ OK   | Connected as user@example.com  |
-| Google Calendar MCP      | ✅ OK   |                                |
-| Odoo MCP                 | ✅ OK   | 5 projects found               |
-| Local Google API token   | ✅ OK   | File present                   |
+| Service                  | Status                  | Detail                                            |
+|--------------------------|-------------------------|---------------------------------------------------|
+| Internet                 | ✅ OK                   |                                                   |
+| Gmail MCP                | ✅ OK                   | Connected as user@example.com                     |
+| Google Calendar MCP      | ❌ NOT CONFIGURED        | Not authenticated                                 |
+| Odoo MCP                 | ✅ OK                   | 14 projects found                                 |
+| Odoo MCP (outside Alice) | ✅ OK (project-scoped)  | Only active inside the Alice project directory    |
+| Local Google API token   | ❌ MISSING              | Re-run auth script to regenerate                  |
 ```
 
-Use `✅ OK`, `❌ UNAVAILABLE`, or `⚠️ WARNING` in the Status column.
+**Allowed status values — use exactly these, no others:**
 
-If any service fails, append a **Diagnosis** section with:
+| Status | When to use |
+|---|---|
+| `✅ OK` | Service reachable and working |
+| `✅ OK (project-scoped)` | Odoo MCP not found because check ran outside Alice — this is correct, not a failure |
+| `❌ NOT CONFIGURED` | Tool/file genuinely missing or not authenticated |
+| `❌ MISSING` | Local file not found |
+| `❌ UNAVAILABLE` | Tool found but call failed (auth/network error) |
+
+**Never use `⚠️ WARNING`.** If something is working as designed, use `✅ OK` or `✅ OK (project-scoped)`. Reserve `❌` for actual failures that need user action.
+
+If any `❌` status is present, append a **Diagnosis** section with:
 - What likely caused the failure
-- The fix steps (e.g. re-run auth, check MCP config, verify network)
+- The fix steps
 
 ---
 
