@@ -203,23 +203,21 @@ The `description:` field controls implicit auto-loading — Claude Code loads a 
 
 ## Running Modes
 
-Alice operates in three modes:
-
-| Mode | Name | How Alice activates |
-|---|---|---|
-| 1 | **Inactive** | Responds only when the user speaks to her — conversation-driven, no background activity |
-| 2 | **Active (MCP-triggered)** | Woken by an external MCP tool call — reacts to a trigger from an integrated service or tool |
-| 3 | **Active (Scheduled)** | Runs autonomously on a cron schedule via FastAPI + APScheduler or Windows Task Scheduler |
-
-**Mode 1** is the default. Alice never acts on her own in this mode — she only responds to the current conversation.
-
-**Mode 2** requires an MCP server to be registered in `/mcp/registry.md` and configured to call Alice's endpoints. Alice receives the trigger and acts on it.
-
-**Mode 3** requires the FastAPI server to be running (`bash start.sh`). Scripts in `/auto-scripts/` are scheduled via `POST /schedule` and run without user input. Windows Task Scheduler is an alternative when FastAPI is not running persistently.
+- **Mode 1 — Inactive** (default): responds only when the user speaks, no background activity
+- **Mode 2 — MCP-triggered**: woken by an external MCP call; requires server registered in `/mcp/registry.md`
+- **Mode 3 — Scheduled**: runs via FastAPI (`bash start.sh`, `localhost:8000`) or Windows Task Scheduler
 
 ## Auto-Scripts
 
 `/auto-scripts/` stores all automation scripts. Use Python scripts invoked via FastAPI or Windows Task Scheduler. FastAPI runs locally on `localhost:8000`.
+
+### Python Virtual Environment Rule
+
+All Python scripts must use `{ALICE_ROOT}/.venv/`. Before running or writing any script:
+- If `.venv` doesn't exist: `python3 -m venv {ALICE_ROOT}/.venv`
+- Always invoke via `{ALICE_ROOT}/.venv/bin/python` — never system Python
+- Check deps are installed; install missing ones with `{ALICE_ROOT}/.venv/bin/pip install <pkg>`
+- New scripts must include a dependency guard: `importlib.util.find_spec(pkg)` → auto-install if `None`
 
 ## Current Stage
 
