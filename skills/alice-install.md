@@ -5,6 +5,7 @@ scope: meta
 triggers:
   - "install alice"
   - "install alice skills"
+  - "alice install"
   - "alice global skills"
   - "make alice skills global"
 ---
@@ -43,11 +44,15 @@ Present the enabled skills as a table:
 
 If `config/install-config.json` does not exist, tell the user:
 > "No personal install config found — using defaults from `config/install-config.json.example`.
-> To customise: `cp config/install-config.json.example config/install-config.json`"
+> To customise:
+> - Mac/Linux: `cp config/install-config.json.example config/install-config.json`
+> - Windows: `copy config\install-config.json.example config\install-config.json`"
 
 If `config/skill-personal.json` does not exist, tell the user:
 > "No personal data config found — contacts, timezone, etc. will use placeholder values from the example.
-> To add your real data: `cp config/skill-personal.json.example config/skill-personal.json`"
+> To add your real data:
+> - Mac/Linux: `cp config/skill-personal.json.example config/skill-personal.json`
+> - Windows: `copy config\skill-personal.json.example config\skill-personal.json`"
 
 Ask the user to confirm before proceeding.
 
@@ -56,7 +61,11 @@ Ask the user to confirm before proceeding.
 ## Step 2 — Run the install script
 
 ```
+# Mac/Linux
 python auto-scripts/install.py
+
+# Windows (if 'python' not in PATH)
+py auto-scripts/install.py
 ```
 
 Show the user the full script output.
@@ -146,6 +155,7 @@ Read and follow: `{ALICE_ROOT}/skills/<skill-name>.md`
    my_val = skill_personal.get("my_token", "")
    content = content.replace("{MY_TOKEN}", my_val)
    ```
+   Note: all `open()` calls in `install.py` / `uninstall.py` use `encoding="utf-8"` — maintain this for any new file I/O added.
 4. Use `{MY_TOKEN}` in the skill file — never hardcode personal values
 
 ### Step 4 — Register in install config
@@ -166,7 +176,11 @@ Add to **both** `config/install-config.json.example` and `config/install-config.
 ### Step 5 — Re-run install
 
 ```
+# Mac/Linux
 python auto-scripts/install.py
+
+# Windows (if 'python' not in PATH)
+py auto-scripts/install.py
 ```
 
 ---

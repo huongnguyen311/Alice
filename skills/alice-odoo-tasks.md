@@ -18,9 +18,22 @@ triggers:
   - "show tasks"
   - "find the task"
 mcp_required: odoo
+mcp_scope: global
 ---
 
 # Skill: Odoo Tasks
+
+## Execution Strategy
+
+Use `odoo_search`, `odoo_create`, `odoo_write`, `odoo_get` directly. The Odoo MCP is configured globally and available in every session.
+
+**MCP parameter types — always pass native JSON, never strings:**
+- `fields`: array of strings → `["id", "name"]`, not `"[\"id\", \"name\"]"`
+- `domain`: array of triplets → `[["name", "ilike", "foo"]]`, not a stringified version
+- `ids`: array of integers → `[42]`, not `"[42]"`
+- Passing a serialized string where an array is expected causes: `'[...]' is not of type 'array'`
+
+---
 
 ## When to Use
 

@@ -17,6 +17,55 @@ from pathlib import Path
 
 ALICE_ROOT = Path(__file__).parent.parent.resolve()
 MANIFEST_PATH = ALICE_ROOT / "data" / "install-manifest.json"
+GLOBAL_CLAUDE_JSON = Path.home() / ".claude.json"
+
+
+def remove_global_mcps() -> None:
+    """
+    Remove MCP servers from ~/.claude.json that were added by install.py.
+
+    Only removes an entry if its name AND config exactly match what is currently
+    in Alice's .mcp.json — so unrelated global MCPs (same name, different config)
+    are never touched.
+    """
+    mcp_source = ALICE_ROOT / ".mcp.json"
+    if not mcp_source.exists():
+        print("  [SKIPPED]  .mcp.json not found — nothing to remove from ~/.claude.json")
+        return
+
+    alice_mcps = json.loads(mcp_source.read_text(encoding="utf-8")).get("mcpServers", {})
+    if not alice_mcps:
+        print("  [SKIPPED]  No MCP servers defined in .mcp.json")
+        return
+
+    if not GLOBAL_CLAUDE_JSON.exists():
+        print("  [SKIPPED]  ~/.claude.json not found")
+        return
+
+    claude_json = json.loads(GLOBAL_CLAUDE_JSON.read_text(encoding="utf-8"))
+    existing = claude_json.get("mcpServers", {})
+
+    removed, skipped = [], []
+    for name, cfg in alice_mcps.items():
+        if name not in existing:
+            continue
+        if existing[name] == cfg:
+            del existing[name]
+            removed.append(name)
+        else:
+            # Config differs — may belong to another project; leave it
+            skipped.append(name)
+
+    if removed or skipped:
+        claude_json["mcpServers"] = existing
+        GLOBAL_CLAUDE_JSON.write_text(json.dumps(claude_json, indent=2) + "\n", encoding="utf-8")
+
+    for name in removed:
+        print(f"  [OK]       MCP '{name}' removed from ~/.claude.json")
+    for name in skipped:
+        print(f"  [SKIPPED]  MCP '{name}' config differs — not removed (may belong to another project)")
+    if not removed and not skipped:
+        print("  [OK]       No Alice MCPs found in ~/.claude.json (already clean)")
 
 
 def main():
@@ -25,7 +74,7 @@ def main():
         print("Nothing to uninstall. If you installed skills manually, remove them from ~/.claude/skills/ by hand.")
         sys.exit(0)
 
-    with open(MANIFEST_PATH) as f:
+    with open(MANIFEST_PATH, encoding="utf-8") as f:
         try:
             manifest = json.load(f)
         except json.JSONDecodeError as e:
@@ -75,6 +124,10 @@ def main():
                 print(f"  — dir kept (still has: {[f.name for f in remaining]})", end="")
 
         print()
+
+    # Remove Alice's MCP servers from ~/.claude.json
+    print("\nGlobal MCP cleanup —")
+    remove_global_mcps()
 
     # Delete the manifest
     MANIFEST_PATH.unlink()

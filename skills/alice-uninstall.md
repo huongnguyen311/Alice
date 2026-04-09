@@ -28,14 +28,19 @@ Reads `data/install-manifest.json` and removes exactly what Alice installed — 
 Run the uninstall script from Alice's root directory:
 
 ```
+# Mac/Linux
 python auto-scripts/uninstall.py
+
+# Windows (if 'python' not in PATH)
+py auto-scripts/uninstall.py
 ```
 
 Show the user the full script output. The script:
 1. Reads `data/install-manifest.json` — stops cleanly if no manifest found
 2. For each skill: removes the symlink (or copied file on Windows)
 3. Removes the skill's subdirectory if it is now empty
-4. Deletes the manifest file
+4. Removes Alice's MCP servers from `~/.claude.json` — only if the name **and config** exactly match `.mcp.json` (unrelated global MCPs are never touched)
+5. Deletes the manifest file
 
 Alice's source skill files in `skills/` are never touched.
 

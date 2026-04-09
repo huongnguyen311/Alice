@@ -49,6 +49,12 @@ alice/
 - Installed copies at `~/.claude/skills/` contain real values; source skill files stay clean
 - Skills with tokens are installed as **copies** (tokens baked in); skills without tokens are **symlinked** (edits propagate automatically)
 
+**Built-in path tokens (no config needed):**
+
+| Token | Resolves to |
+|---|---|
+| `{ALICE_ROOT}` | Absolute path to this Alice project directory |
+
 **When creating or editing a skill:**
 1. Use `{TOKEN}` for any personal data — never hardcode names, emails, paths, or platform-specific commands
 2. Document the token in `config/skill-personal.json.example` with a placeholder value. **The key must exactly match the skill's `name` field in `install-config.json`** (e.g. `alice-book-meeting`, not `book-meeting`). A mismatch silently leaves tokens unresolved.
@@ -185,17 +191,20 @@ The `description:` field controls implicit auto-loading — Claude Code loads a 
 
 **7. If a wrapper skill was created** — also add it to `capabilities.md` and install configs (pointing to the `-global.md` file).
 
-**8. If the skill checks service/connection status** — apply the project-scoped MCP rule:
+**8. If the skill checks service/connection status** — use this MCP scope table:
 
-| MCP scope | Tool found + call succeeds? | Report as |
+| MCP type | Tool found + call succeeds? | Report as |
 |---|---|---|
-| Global (`~/.claude/settings.json`) | Yes | `✅ OK` |
-| Global (`~/.claude/settings.json`) | No | `❌ NOT CONFIGURED` |
-| Project-scoped (`.claude.json`) | Yes | `✅ OK` |
-| Project-scoped (`.claude.json`) | No (run from outside Alice) | `✅ OK (project-scoped — only active inside Alice project)` |
-| Project-scoped (`.claude.json`) | No (run from inside Alice) | `❌ NOT CONFIGURED — check .claude.json` |
+| Machine-global (`~/.claude.json`) | Yes | `✅ OK` |
+| Machine-global (`~/.claude.json`) | No | `❌ NOT CONFIGURED — re-run install.py` |
+| Account-bound (claude.ai remote) | Yes | `✅ OK` |
+| Account-bound (claude.ai remote) | No | `❌ NOT CONFIGURED — session not authenticated with claude.ai` |
 
-> **Why:** Global skills can be invoked from any project. Project-scoped MCPs (e.g. Odoo configured in Alice's `.claude.json`) won't be available in other sessions. This is correct behaviour — never report it as a failure.
+**Current MCP scope for Alice's services:**
+- **Odoo** → machine-global, synced to `~/.claude.json` by `install.py`
+- **Gmail, Google Calendar** → account-bound, loaded automatically from claude.ai session
+
+> **Why:** `install.py` syncs Alice's `.mcp.json` servers into `~/.claude.json` so they are available in every session on this machine — not just inside the Alice project.
 
 ## MCP Registry
 
