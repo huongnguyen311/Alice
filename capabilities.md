@@ -44,6 +44,7 @@ This is Alice's **master routing index**. Scan this file first to identify which
 | Create, find, update, or change stage of Odoo tasks | "odoo task", "task in project", "create task", "add a task", "move task", "mark task", "show tasks", "find the task" | `skills/alice-odoo-tasks.md` |
 | Save structured notes or content to an Odoo task | "task notes", "save notes to task", "log to task", "add content to task", "update task description" | `skills/alice-odoo-task-notes.md` |
 | Check connectivity of Alice's services and MCP tools | "connection check", "check connection", "service status", "are services connected", "is alice connected" | `skills/alice-connection-check.md` |
+| Suggest what to eat — Vietnamese-focused meal suggestions | "what to eat", "suggest food", "ăn gì", "gợi ý món ăn", "suggest a meal", "hôm nay ăn gì" | `skills/alice-suggest-meal.md` |
 | Install Alice skills globally | "install alice", "install alice skills", "make alice skills global" | `skills/alice-install.md` |
 | Uninstall Alice global skills | "uninstall alice", "uninstall alice skills", "remove alice skills" | `skills/alice-uninstall.md` |
 | Global wrapper: read/analyse CSV from any project (`/alice-read-csv`) | (same as read-csv) | `skills/alice-read-csv.md` |
