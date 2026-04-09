@@ -66,6 +66,22 @@
       "mcp_required": null,
       "warning": "Gmail and Calendar MCPs require claude.ai session authentication. Odoo MCP is global (synced by install.py)",
       "enabled": true
+    },
+    {
+      "name": "alice-uninstall",
+      "file": "alice-uninstall.md",
+      "type": "python",
+      "mcp_required": null,
+      "warning": null,
+      "enabled": true
+    },
+    {
+      "name": "alice-install",
+      "file": "alice-install.md",
+      "type": "python",
+      "mcp_required": null,
+      "warning": null,
+      "enabled": true
     }
   ]
 }
