@@ -68,10 +68,11 @@ if __name__ == "__main__":
 - [ ] `os.makedirs(..., exist_ok=True)` used before any file write
 - [ ] Human-readable summary printed to stdout on completion
 - [ ] Script saved to `/auto-scripts/script_name.py`
+- [ ] Dependency guard included at top (auto-install missing libs via `importlib.util.find_spec`)
 
 ## After Creating the Script
 
 Tell the user:
 1. What the script does
-2. How to run it directly: `python auto-scripts/script_name.py`
+2. How to run it directly: `.venv/bin/python auto-scripts/script_name.py`
 3. Offer to schedule it if relevant

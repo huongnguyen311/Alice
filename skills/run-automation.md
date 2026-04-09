@@ -35,9 +35,9 @@ Alice responds when the user asks. To run a script manually:
 # Via FastAPI (server must be running)
 curl -X POST http://localhost:8000/run/script_name
 
-# Directly with Python
-python auto-scripts/script_name.py
-python auto-scripts/script_name.py --input data/myfile.csv
+# Directly with Python (always use local venv)
+.venv/bin/python auto-scripts/script_name.py
+.venv/bin/python auto-scripts/script_name.py --input data/myfile.csv
 ```
 
 ---
