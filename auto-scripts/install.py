@@ -43,14 +43,23 @@ PERSONAL_EXAMPLE_PATH = ALICE_ROOT / "config" / "skill-personal.json.example"
 
 def ensure_venv() -> None:
     """Create .venv at ALICE_ROOT if it doesn't exist, then re-exec inside it."""
-    venv_python = ALICE_ROOT / ".venv" / "bin" / "python"
+    # Windows: Scripts/python.exe; Unix: bin/python
+    if platform.system() == "Windows":
+        venv_python = ALICE_ROOT / ".venv" / "Scripts" / "python.exe"
+    else:
+        venv_python = ALICE_ROOT / ".venv" / "bin" / "python"
     if not venv_python.exists():
         print(f"Creating venv at {ALICE_ROOT / '.venv'} ...")
         subprocess.run([sys.executable, "-m", "venv", str(ALICE_ROOT / ".venv")], check=True)
         print("Venv created.\n")
     # Re-exec with venv Python if we're not already inside it
     if Path(sys.executable).resolve() != venv_python.resolve():
-        os.execv(str(venv_python), [str(venv_python)] + sys.argv)
+        if platform.system() == "Windows":
+            # os.execv doesn't work reliably on Windows — use subprocess + exit
+            result = subprocess.run([str(venv_python)] + sys.argv)
+            sys.exit(result.returncode)
+        else:
+            os.execv(str(venv_python), [str(venv_python)] + sys.argv)
 
 
 def _now() -> str:
@@ -249,9 +258,10 @@ def main():
 
     print(f"Alice install — target: {CLAUDE_SKILLS}")
     print(f"Config:        {CONFIG_PATH if CONFIG_PATH.exists() else CONFIG_EXAMPLE_PATH}")
-    print(f"Personal:      {PERSONAL_PATH if PERSONAL_PATH.exists() else PERSONAL_EXAMPLE_PATH + ' (example)'}\n")
+    print(f"Personal:      {PERSONAL_PATH if PERSONAL_PATH.exists() else str(PERSONAL_EXAMPLE_PATH) + ' (example)'}\n")
 
     CLAUDE_SKILLS.mkdir(parents=True, exist_ok=True)
+    MANIFEST_PATH.parent.mkdir(parents=True, exist_ok=True)
 
     now = _now()
     manifest_skills = []
