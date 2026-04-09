@@ -42,8 +42,8 @@ def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-def _load_config() -> list[dict]:
-    """Load skill list from install-config.json. Falls back to example if missing."""
+def _load_config() -> dict:
+    """Load install-config.json. Falls back to example if missing. Returns full config dict."""
     path = CONFIG_PATH if CONFIG_PATH.exists() else CONFIG_EXAMPLE_PATH
     if not path.exists():
         print("ERROR: No install-config.json or install-config.json.example found.")
@@ -52,11 +52,14 @@ def _load_config() -> list[dict]:
     if path == CONFIG_EXAMPLE_PATH:
         print(f"Note: install-config.json not found — using example config ({CONFIG_EXAMPLE_PATH.name})")
         print(f"      Copy it to install-config.json to personalise: cp {CONFIG_EXAMPLE_PATH} {CONFIG_PATH}\n")
-    with open(path) as f:
-        data = json.load(f)
-    # Filter out comment-only entries and disabled skills
+    with open(path, encoding="utf-8") as f:
+        return json.load(f)
+
+
+def _skills_from_config(config: dict) -> list[dict]:
+    """Extract enabled skill entries from config."""
     return [
-        s for s in data.get("skills", [])
+        s for s in config.get("skills", [])
         if not s.get("name", "").startswith("_") and s.get("enabled", True)
     ]
 
@@ -73,7 +76,7 @@ def _load_personal() -> dict:
     if path == PERSONAL_EXAMPLE_PATH:
         print(f"Note: config/skill-personal.json not found — personal tokens will use example values")
         print(f"      Copy and fill in: cp {PERSONAL_EXAMPLE_PATH} {PERSONAL_PATH}\n")
-    with open(path) as f:
+    with open(path, encoding="utf-8") as f:
         data = json.load(f)
     # Strip comment-only keys
     return {k: v for k, v in data.items() if not k.startswith("_")}
@@ -184,8 +187,48 @@ def _install_skill(skill: dict, personal: dict) -> dict:
     return {"status": "OK", "method": method, "dest": str(dest)}
 
 
+
+GLOBAL_CLAUDE_JSON = Path.home() / ".claude.json"
+
+
+def sync_global_mcp() -> None:
+    """Merge Alice's .mcp.json servers into ~/.claude.json as global MCPs."""
+    mcp_source = ALICE_ROOT / ".mcp.json"
+    if not mcp_source.exists():
+        print("  [SKIPPED]          .mcp.json not found — skipping global MCP sync")
+        return
+
+    alice_mcps = json.loads(mcp_source.read_text(encoding="utf-8")).get("mcpServers", {})
+    if not alice_mcps:
+        print("  [SKIPPED]          No MCP servers in .mcp.json")
+        return
+
+    # Load existing ~/.claude.json (may have many other keys — preserve them all)
+    claude_json = json.loads(GLOBAL_CLAUDE_JSON.read_text(encoding="utf-8")) if GLOBAL_CLAUDE_JSON.exists() else {}
+    existing = claude_json.get("mcpServers", {})
+
+    added, updated = [], []
+    for name, cfg in alice_mcps.items():
+        if name not in existing:
+            added.append(name)
+        elif existing[name] != cfg:
+            updated.append(name)
+        existing[name] = cfg
+
+    claude_json["mcpServers"] = existing
+    GLOBAL_CLAUDE_JSON.write_text(json.dumps(claude_json, indent=2) + "\n", encoding="utf-8")
+
+    for name in added:
+        print(f"  [OK]               MCP '{name}' added to ~/.claude.json (global)")
+    for name in updated:
+        print(f"  [OK]               MCP '{name}' updated in ~/.claude.json (global)")
+    if not added and not updated:
+        print(f"  [OK]               Global MCP already up to date")
+
+
 def main():
-    skills = _load_config()
+    config = _load_config()
+    skills = _skills_from_config(config)
     personal = _load_personal()
 
     print(f"Alice install — target: {CLAUDE_SKILLS}")
@@ -237,8 +280,11 @@ def main():
         "skills": manifest_skills,
     }
 
-    with open(MANIFEST_PATH, "w") as f:
+    with open(MANIFEST_PATH, "w", encoding="utf-8") as f:
         json.dump(manifest, f, indent=2)
+
+    print("\nGlobal MCP sync —")
+    sync_global_mcp()
 
     print(f"\nManifest written: {MANIFEST_PATH}")
     print(f"\nNote: These skills are now available in every project on this machine.")

@@ -1,6 +1,6 @@
 ---
 name: alice-connection-check
-description: Check connectivity status of Alice's integrated services and MCP tools — Gmail, Google Calendar, Odoo, and internet access. Use when verifying Alice's connections in Alice's project.
+description: Check connectivity status of Alice's integrated services and MCP tools — Gmail, Google Calendar, Odoo, and internet access. Works from any project since Odoo MCP is global.
 scope: core
 triggers:
   - "connection check"
@@ -28,7 +28,7 @@ Checks the connectivity and reachability of Alice's integrated services. Reports
 | Service | Check Method | Healthy Signal |
 |---|---|---|
 | **Internet** | Fetch a known reliable URL (e.g. `https://www.google.com`) | HTTP 200 |
-| **Gmail (MCP)** | ToolSearch schema → call `mcp__claude_ai_Gmail__gmail_get_profile` | Returns email address |
+| **Gmail (MCP)** | ToolSearch schema → call `mcp__claude_ai_Gmail__list_labels` | Returns label list |
 | **Google Calendar (MCP)** | ToolSearch schema → call `mcp__claude_ai_Google_Calendar__authenticate` | No error |
 | **Odoo (MCP)** | ToolSearch schema → call `mcp__odoo__odoo_count` with model `project.project` | Returns a number |
 | **Google API (Python/local)** | Check file exists: `{ALICE_ROOT}/credentials/google_token.json` | File present |
@@ -46,13 +46,13 @@ Use the `WebFetch` tool to fetch `https://www.google.com`.
 
 ### 2. Gmail MCP
 
-Use `ToolSearch` (query: `"select:mcp__claude_ai_Gmail__gmail_get_profile"`) to fetch the schema, then call `mcp__claude_ai_Gmail__gmail_get_profile`.
+Use `ToolSearch` (query: `"select:mcp__claude_ai_Gmail__list_labels"`) to fetch the schema, then call `mcp__claude_ai_Gmail__list_labels`.
 
 > **Why:** Gmail MCP tools are deferred — ToolSearch must be called first or the tool will falsely appear unconfigured.
 
-- Returns a profile with an email → `Gmail MCP: OK (connected as <email>)`
-- ToolSearch returns no results → `Gmail MCP: NOT CONFIGURED`
-- Call errors after schema loaded → `Gmail MCP: UNAVAILABLE`
+- Returns a list of labels → `Gmail MCP: ✅ OK`
+- ToolSearch returns no results → `Gmail MCP: ❌ NOT CONFIGURED — session not authenticated with claude.ai`
+- Call errors after schema loaded → `Gmail MCP: ❌ UNAVAILABLE`
 
 ### 3. Google Calendar MCP
 
@@ -60,9 +60,9 @@ Use `ToolSearch` (query: `"select:mcp__claude_ai_Google_Calendar__authenticate"`
 
 > **Why:** Same deferred-tool pattern as Gmail.
 
-- Succeeds → `Google Calendar MCP: OK`
-- ToolSearch returns no results → `Google Calendar MCP: NOT CONFIGURED`
-- Call errors after schema loaded → `Google Calendar MCP: UNAVAILABLE`
+- Succeeds → `Google Calendar MCP: ✅ OK`
+- ToolSearch returns no results → `Google Calendar MCP: ❌ NOT CONFIGURED — session not authenticated with claude.ai`
+- Call errors after schema loaded → `Google Calendar MCP: ❌ UNAVAILABLE`
 
 ### 4. Odoo MCP
 
@@ -71,9 +71,8 @@ First use `ToolSearch` to fetch the `mcp__odoo__odoo_count` schema (query: `"sel
 > **Why:** Odoo MCP tools are deferred — they must be fetched via ToolSearch before they can be called. Skipping this step causes a false "not found" error even when Odoo is correctly set up.
 
 - Tool found + call returns a number → `Odoo MCP: ✅ OK (<N> projects found)`
-- ToolSearch returns no results AND running from outside Alice project → `Odoo MCP: ✅ OK (project-scoped — only active inside the Alice project directory)`
-- ToolSearch returns no results AND running from inside Alice project → `Odoo MCP: ❌ NOT CONFIGURED — check the \`odoo\` entry in \`.claude.json\``
-- Call errors after schema loaded → `Odoo MCP: ❌ UNAVAILABLE` — server reachable but call failed. Check the bearer token in `.claude.json`.
+- ToolSearch returns no results → `Odoo MCP: ❌ NOT CONFIGURED — run \`python auto-scripts/install.py\` inside the Alice project to sync Odoo MCP globally`
+- Call errors after schema loaded → `Odoo MCP: ❌ UNAVAILABLE` — server reachable but call failed. Check the bearer token in `~/.claude/settings.json` or re-run `install.py`.
 
 ### 5. Local Google API credentials
 
@@ -97,7 +96,6 @@ Report results in a single summary block:
 | Gmail MCP                | ✅ OK                   | Connected as user@example.com                     |
 | Google Calendar MCP      | ❌ NOT CONFIGURED        | Not authenticated                                 |
 | Odoo MCP                 | ✅ OK                   | 14 projects found                                 |
-| Odoo MCP (outside Alice) | ✅ OK (project-scoped)  | Only active inside the Alice project directory    |
 | Local Google API token   | ❌ MISSING              | Re-run auth script to regenerate                  |
 ```
 
@@ -106,12 +104,11 @@ Report results in a single summary block:
 | Status | When to use |
 |---|---|
 | `✅ OK` | Service reachable and working |
-| `✅ OK (project-scoped)` | Odoo MCP not found because check ran outside Alice — this is correct, not a failure |
 | `❌ NOT CONFIGURED` | Tool/file genuinely missing or not authenticated |
 | `❌ MISSING` | Local file not found |
 | `❌ UNAVAILABLE` | Tool found but call failed (auth/network error) |
 
-**Never use `⚠️ WARNING`.** If something is working as designed, use `✅ OK` or `✅ OK (project-scoped)`. Reserve `❌` for actual failures that need user action.
+**Never use `⚠️ WARNING`.** Reserve `❌` for actual failures that need user action.
 
 If any `❌` status is present, append a **Diagnosis** section with:
 - What likely caused the failure
@@ -121,6 +118,7 @@ If any `❌` status is present, append a **Diagnosis** section with:
 
 ## Notes
 
-- MCP tools (Gmail, Calendar, Odoo) are only available in the `claude.ai` web app by default. In Claude Code CLI, you need local MCP servers configured.
+- Gmail and Calendar MCPs are **account-bound** — loaded automatically from your claude.ai session. No local config needed. NOT CONFIGURED means the session is not authenticated with claude.ai.
+- Odoo MCP is **machine-global** — registered in `~/.claude.json` by `install.py`. NOT CONFIGURED means `install.py` hasn't been run yet.
 - A failing internet check means ALL network-dependent checks will also fail — report this first before interpreting other failures.
 - The local Google API token check is independent of MCP availability.

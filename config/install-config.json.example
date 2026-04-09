@@ -64,7 +64,7 @@
       "file": "alice-connection-check.md",
       "type": "python",
       "mcp_required": null,
-      "warning": "MCP checks (Gmail, Calendar, Odoo) only work in claude.ai web app by default — configure local MCP servers for CLI use",
+      "warning": "Gmail and Calendar MCPs require claude.ai session authentication. Odoo MCP is global (synced by install.py)",
       "enabled": true
     }
   ]

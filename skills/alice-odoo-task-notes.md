@@ -12,6 +12,7 @@ triggers:
   - "add content to task"
   - "task notes"
 mcp_required: odoo
+mcp_scope: global
 ---
 
 # Skill: Odoo Task Notes
@@ -83,6 +84,15 @@ Use in the heading — enables grep-based retrieval:
 | "update description", "replace", "rewrite" | **Overwrite** — confirm first if existing content is > 2 lines |
 
 **Never silently overwrite a non-empty description.** If the task already has content, show the user the existing content and confirm before replacing.
+
+---
+
+## MCP Parameter Types — Always Pass Native JSON
+
+- `fields`: array of strings → `["id", "name"]`, not `"[\"id\", \"name\"]"`
+- `ids`: array of integers → `[42]`, not `"[42]"`
+- `domain`: array of triplets → `[["name", "ilike", "foo"]]`, not a stringified version
+- Passing a serialized string where an array is expected causes: `'[...]' is not of type 'array'`
 
 ---
 
