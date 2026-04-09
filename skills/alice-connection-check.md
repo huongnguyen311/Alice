@@ -1,6 +1,6 @@
 ---
 name: alice-connection-check
-description: Check connectivity status of Alice's integrated services and MCP tools — Gmail, Google Calendar, Odoo, and internet access. Works from any project since Odoo MCP is global.
+description: Check whether Alice's integrated services are reachable — Gmail, Google Calendar, Odoo MCP, and internet. Use when diagnosing Alice service connectivity or verifying MCP health.
 scope: core
 triggers:
   - "connection check"
