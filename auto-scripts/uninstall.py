@@ -12,10 +12,22 @@ Or via Alice: say "uninstall alice skills"
 
 import json
 import os
+import subprocess
 import sys
 from pathlib import Path
 
 ALICE_ROOT = Path(__file__).parent.parent.resolve()
+
+
+def ensure_venv() -> None:
+    """Create .venv at ALICE_ROOT if it doesn't exist, then re-exec inside it."""
+    venv_python = ALICE_ROOT / ".venv" / "bin" / "python"
+    if not venv_python.exists():
+        print(f"Creating venv at {ALICE_ROOT / '.venv'} ...")
+        subprocess.run([sys.executable, "-m", "venv", str(ALICE_ROOT / ".venv")], check=True)
+        print("Venv created.\n")
+    if Path(sys.executable).resolve() != venv_python.resolve():
+        os.execv(str(venv_python), [str(venv_python)] + sys.argv)
 MANIFEST_PATH = ALICE_ROOT / "data" / "install-manifest.json"
 GLOBAL_CLAUDE_JSON = Path.home() / ".claude.json"
 
@@ -69,6 +81,7 @@ def remove_global_mcps() -> None:
 
 
 def main():
+    ensure_venv()
     if not MANIFEST_PATH.exists():
         print("No install manifest found at data/install-manifest.json.")
         print("Nothing to uninstall. If you installed skills manually, remove them from ~/.claude/skills/ by hand.")

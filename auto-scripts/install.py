@@ -24,8 +24,11 @@ Or via Alice: say "install alice skills"
 """
 
 import json
+import os
 import platform
 import shutil
+import subprocess
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -36,6 +39,18 @@ CONFIG_PATH = ALICE_ROOT / "config" / "install-config.json"
 CONFIG_EXAMPLE_PATH = ALICE_ROOT / "config" / "install-config.json.example"
 PERSONAL_PATH = ALICE_ROOT / "config" / "skill-personal.json"
 PERSONAL_EXAMPLE_PATH = ALICE_ROOT / "config" / "skill-personal.json.example"
+
+
+def ensure_venv() -> None:
+    """Create .venv at ALICE_ROOT if it doesn't exist, then re-exec inside it."""
+    venv_python = ALICE_ROOT / ".venv" / "bin" / "python"
+    if not venv_python.exists():
+        print(f"Creating venv at {ALICE_ROOT / '.venv'} ...")
+        subprocess.run([sys.executable, "-m", "venv", str(ALICE_ROOT / ".venv")], check=True)
+        print("Venv created.\n")
+    # Re-exec with venv Python if we're not already inside it
+    if Path(sys.executable).resolve() != venv_python.resolve():
+        os.execv(str(venv_python), [str(venv_python)] + sys.argv)
 
 
 def _now() -> str:
@@ -227,6 +242,7 @@ def sync_global_mcp() -> None:
 
 
 def main():
+    ensure_venv()
     config = _load_config()
     skills = _skills_from_config(config)
     personal = _load_personal()
