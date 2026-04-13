@@ -102,8 +102,9 @@ def _load_personal() -> dict:
         print(f"      Copy and fill in: cp {PERSONAL_EXAMPLE_PATH} {PERSONAL_PATH}\n")
     with open(path, encoding="utf-8") as f:
         data = json.load(f)
-    # Strip comment-only keys
-    return {k: v for k, v in data.items() if not k.startswith("_")}
+    # Strip comment-only metadata keys; preserve _user (functional identity data)
+    METADATA_KEYS = {"_readme", "_usage"}
+    return {k: v for k, v in data.items() if k not in METADATA_KEYS}
 
 
 def _build_contacts_table(contacts: list[dict]) -> str:
@@ -122,12 +123,30 @@ def _apply_tokens(content: str, skill_name: str, personal: dict) -> str:
     """
     Substitute all tokens in skill file content:
       {ALICE_ROOT}               → resolved absolute Alice root path
+      {USER_NAME}                → user's full name (from _user section)
+      {USER_EMAIL}               → user's email address
+      {USER_TIMEZONE}            → user's timezone (e.g. Asia/Ho_Chi_Minh)
+      {USER_ROLE}                → user's job role/title
+      {USER_ORG}                 → user's organization/company
+      {USER_LOCATION}            → user's city/country
+      {USER_LANGUAGE}            → user's preferred language code
       {CONTACTS}                 → Markdown contacts table from skill-personal.json
-      {TIMEZONE}                 → timezone string
+      {TIMEZONE}                 → timezone string (deprecated — use {USER_TIMEZONE})
       {MEETING_DURATION_HOURS}   → default meeting duration
       {ADD_GOOGLE_MEET_FOR_EXTERNAL} → true/false string
     """
     content = content.replace("{ALICE_ROOT}", str(ALICE_ROOT))
+
+    # Global user identity tokens — applied to all skills
+    user = personal.get("_user", {})
+    if user:
+        content = content.replace("{USER_NAME}",     user.get("name",         ""))
+        content = content.replace("{USER_EMAIL}",    user.get("email",        ""))
+        content = content.replace("{USER_TIMEZONE}", user.get("timezone",     "UTC"))
+        content = content.replace("{USER_ROLE}",     user.get("role",         ""))
+        content = content.replace("{USER_ORG}",      user.get("organization", ""))
+        content = content.replace("{USER_LOCATION}", user.get("location",     ""))
+        content = content.replace("{USER_LANGUAGE}", user.get("language",     "en"))
 
     skill_personal = personal.get(skill_name, {})
     if skill_personal:
@@ -160,9 +179,11 @@ def _install_skill(skill: dict, personal: dict) -> dict:
 
     # Determine if this skill needs token substitution (personal data or ALICE_ROOT)
     raw = source_orig.read_text(encoding="utf-8")
+    USER_TOKENS = ("USER_NAME", "USER_EMAIL", "USER_TIMEZONE", "USER_ROLE", "USER_ORG", "USER_LOCATION", "USER_LANGUAGE")
+    SKILL_TOKENS = ("CONTACTS", "TIMEZONE", "MEETING_DURATION_HOURS", "ADD_GOOGLE_MEET_FOR_EXTERNAL")
     needs_substitution = (
         "{ALICE_ROOT}" in raw
-        or any(f"{{{t}}}" in raw for t in ("CONTACTS", "TIMEZONE", "MEETING_DURATION_HOURS", "ADD_GOOGLE_MEET_FOR_EXTERNAL"))
+        or any(f"{{{t}}}" in raw for t in USER_TOKENS + SKILL_TOKENS)
     )
 
     # Skills with tokens must be installed as copies (tokens baked in at install time).

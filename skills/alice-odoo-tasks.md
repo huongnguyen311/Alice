@@ -60,6 +60,22 @@ Ask **all** missing required fields in **one message** — never one at a time.
 
 ---
 
+## Self-Assignment
+
+If the user says "assign to me", "assign it to myself", or similar, resolve the user's Odoo account using known identity — no need to ask:
+
+1. Search by name first:
+   ```
+   odoo_search(model="res.users", domain=[["name", "ilike", "{USER_NAME}"]], fields=["id", "name"])
+   ```
+2. Fallback by email if no name match:
+   ```
+   odoo_search(model="res.users", domain=[["login", "=", "{USER_EMAIL}"]], fields=["id", "name"])
+   ```
+3. Use the first match. If neither returns a result, ask: "What's your Odoo username?"
+
+---
+
 ## Resolve Project Name
 
 Use this algorithm every time a project name is needed. Ask the user **at most once**.
