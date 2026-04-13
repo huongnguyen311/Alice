@@ -10,6 +10,7 @@ Connect Claude Code to the inapps Odoo MCP server to query and manage Odoo data 
 
 - Claude Code installed (`claude` available in terminal)
 - Access to `erp.inapps.net` with your own Odoo account
+- This repo cloned locally (`Claude-alice/`)
 
 ---
 
@@ -26,35 +27,38 @@ Connect Claude Code to the inapps Odoo MCP server to query and manage Odoo data 
 
 ---
 
-## Step 2 — Build Your Auth Token
+## Step 2 — Edit `.mcp.json`
 
-Run this in your terminal (replace with your actual email and API key):
+Open `Claude-alice/.mcp.json` and fill in your own email and API key:
 
-```bash
-echo -n 'your.email@inapps.net:YOUR_API_KEY' | base64
+```json
+{
+  "mcpServers": {
+    "odoo": {
+      "type": "http",
+      "url": "https://erp.inapps.net/mcp/",
+      "headers": {
+        "Authorization": "Bearer your.email@inapps.net:YOUR_API_KEY",
+        "X-Odoo-Database": "inapps"
+      }
+    }
+  }
+}
 ```
 
-Copy the output — this is your `BASE64_TOKEN`.
+Replace `your.email@inapps.net` and `YOUR_API_KEY` with your actual credentials. No Base64 encoding needed — the token is `email:api_key` in plain text.
 
-**Example:**
-```bash
-echo -n 'vinh.nguyen@inapps.net:abc123xyz' | base64
-# Output: dmluaC5uZ3V5ZW5AaW5hcHBzLm5ldDphYmMxMjN4eXo=
-```
+> `.mcp.json` is gitignored — your credentials stay local only.
 
 ---
 
-## Step 3 — Register the MCP in Claude Code
-
-Run this once in your terminal:
+## Step 3 — Run install.py
 
 ```bash
-claude mcp add --transport http odoo https://erp.inapps.net/mcp/ --header "Authorization: Basic BASE64_TOKEN"
+python auto-scripts/install.py
 ```
 
-Replace `BASE64_TOKEN` with the output from Step 2.
-
-This registers the MCP at **user scope** — it applies to all your Claude Code sessions.
+This syncs `.mcp.json` into `~/.claude.json`, making the Odoo MCP available globally in every Claude Code session on this machine — not just inside this project.
 
 ---
 
@@ -89,9 +93,10 @@ claude "list all Odoo projects"
 ## Security Notes
 
 - Your API key authenticates you as **yourself** in Odoo — Claude respects your Odoo access rights
-- Never share your API key or Base64 token with anyone
-- Do not commit `.mcp.json` to the repository — keep credentials local only
+- Never share your API key with anyone
+- Do not commit `.mcp.json` to the repository — it is gitignored, keep credentials local only
 - To revoke: Odoo → My Profile → Account Security → delete the key
+- Each team member uses their own API key — no shared credentials, no account login dependency
 
 ---
 
@@ -99,10 +104,10 @@ claude "list all Odoo projects"
 
 | Error | Cause | Fix |
 |---|---|---|
-| `401 Unauthorized` | Wrong credentials or missing header | Re-run Steps 2–3 with correct key |
-| `404 Not Found` (HTML page) | Auth missing — Claude tried OAuth discovery | `.mcp.json` has no `Authorization` header — redo Step 3 |
+| `401 Unauthorized` | Wrong credentials or missing header | Re-check email and API key in `.mcp.json`, re-run `install.py` |
+| `404 Not Found` (HTML page) | Auth missing — Claude tried OAuth discovery | `.mcp.json` has no `Authorization` header — redo Steps 2–3 |
 | `Access Denied` from Odoo | Your account lacks permission for that model | Ask an admin to grant access |
-| `odoo not found` in `claude mcp list` | Registration didn't complete | Re-run the `claude mcp add` command |
+| `odoo not found` in `claude mcp list` | MCP not synced globally | Re-run `python auto-scripts/install.py` |
 
 ---
 
