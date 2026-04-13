@@ -68,6 +68,14 @@
       "enabled": true
     },
     {
+      "name": "alice-git-sync",
+      "file": "alice-git-sync.md",
+      "type": "mcp",
+      "mcp_required": null,
+      "warning": null,
+      "enabled": true
+    },
+    {
       "name": "alice-uninstall",
       "file": "alice-uninstall.md",
       "type": "python",
