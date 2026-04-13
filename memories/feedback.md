@@ -48,6 +48,19 @@ Always ask the user for missing details before creating a calendar event. Do not
 **Why:** User stated this explicitly — the reason may need to be communicated to attendees or noted in context.
 **How to apply:** Before cancelling or moving any calendar event, ask: "Is there a reason you'd like me to note or communicate to attendees?"
 
+### Verify Alice skill installs at the subdirectory path, not the flat .md path
+Global skills are installed at `~/.claude/skills/<name>/SKILL.md` (inside a subdirectory), not at `~/.claude/skills/<name>.md`.
+**Why:** Checking the flat path returned a stale file from an old layout, causing a false "copy is outdated" conclusion when the real symlink at `SKILL.md` was correct all along.
+**How to apply:** When verifying whether a skill is correctly installed after running `install.py`, always check:
+```
+ls -la ~/.claude/skills/<skill-name>/SKILL.md
+```
+A symlink there pointing to the Alice source file means the install is live — edits to source propagate automatically, no reinstall needed.
+
+### Write project-specific learnings to Alice's own memory, not global auto-memory
+**Why:** User explicitly corrected this — Alice-specific feedback and operational learnings belong in `memories/feedback.md`, not in the global Claude Code auto-memory at `~/.claude/projects/.../memory/`.
+**How to apply:** Any feedback, correction, or confirmed approach that is specific to Alice's operation should be written to `memories/feedback.md` (this file). Only cross-project Claude Code behavior (not Alice-specific) belongs in the global auto-memory.
+
 ---
-*Last updated: 2026-03-25*
+*Last updated: 2026-04-13*
 *Updated by: Alice*
