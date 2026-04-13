@@ -60,13 +60,81 @@ Ask **all** missing required fields in **one message** — never one at a time.
 
 ---
 
+## Resolve Project Name
+
+Use this algorithm every time a project name is needed. Ask the user **at most once**.
+
+**Session cache rule:** If a project was already resolved this conversation, reuse `(id, name)` — do not re-query.
+
+**Step 1 — Normalize**
+Lowercase, strip punctuation, split into tokens.
+- `"inapps website"` → `["inapps", "website"]`
+- `"HR"` → `["hr"]`
+
+**Step 2 — AND search** (all tokens must appear in name)
+```
+odoo_search(model="project.project",
+  domain=[["name", "ilike", "<token1>"], ["name", "ilike", "<token2>"], ...],
+  fields=["id", "name"], limit=10)
+```
+- 1 result → **resolved**
+- 2–5 results → go to Step 5
+- >5 results → go to Step 6
+- 0 results → go to Step 3
+
+**Step 3 — OR search** (any token matches)
+
+Build OR domain with Odoo prefix `"|"` operator — use N-1 `"|"` for N conditions:
+```
+# 2 tokens:
+odoo_search(model="project.project",
+  domain=["|", ["name", "ilike", "<token1>"], ["name", "ilike", "<token2>"]],
+  fields=["id", "name"], limit=10)
+
+# 3 tokens:
+domain=["|", "|", ["name", "ilike", "<t1>"], ["name", "ilike", "<t2>"], ["name", "ilike", "<t3>"]]
+```
+- 1 result → **resolved**
+- 2–5 results → go to Step 5
+- >5 results → go to Step 6
+- 0 results → go to Step 4
+
+**Step 4 — Full list fallback**
+```
+odoo_search(model="project.project",
+  domain=[["active", "=", true]],
+  fields=["id", "name"], limit=50)
+```
+In your own reasoning (no extra Odoo call), keep entries where any token is a substring of the name (case-insensitive).
+- 0 matches → show all project names, ask user to identify theirs
+- 1 match → **resolved**
+- 2–5 → go to Step 5
+- >5 → go to Step 6
+
+**Step 5 — Disambiguation** (ask once, numbered list)
+```
+I found a few projects matching "[input]":
+1. inapps.net Website Redesign 2025
+2. inapps Internal Portal
+
+Which one? Reply with the number or the exact name.
+```
+Cache the chosen `(id, name)` for the rest of the session.
+
+**Step 6 — Too many results**
+```
+I found [N] projects matching "[input]". Could you add a few more words from the project name?
+```
+Re-run from Step 1 with the refined input.
+
+**After resolution — always show the full Odoo project name in confirmations** so the user can verify the match.
+
+---
+
 ## Create a Task
 
 1. Validate required fields (task title + project name). Ask if missing.
-2. Resolve project:
-   ```
-   odoo_search(model="project.project", domain=[("name", "ilike", "<project name>")], fields=["id", "name"])
-   ```
+2. Resolve project using the **Resolve Project Name** algorithm above to get `project_id`.
 3. If assignee given, resolve user ID:
    ```
    odoo_search(model="res.users", domain=[("name", "ilike", "<assignee name>")], fields=["id", "name"])
@@ -87,14 +155,20 @@ Ask **all** missing required fields in **one message** — never one at a time.
 
 ## Find a Task
 
+First resolve `project_id` using the **Resolve Project Name** algorithm. Then filter by integer ID — this is faster and more accurate than matching on the relational name field.
+
 Single task by name:
 ```
-odoo_search(model="project.task", domain=[("name", "ilike", "<name>"), ("project_id.name", "ilike", "<project>")], fields=["id", "name", "stage_id", "date_deadline", "user_ids"])
+odoo_search(model="project.task",
+  domain=[["name", "ilike", "<name>"], ["project_id", "=", <project_id>]],
+  fields=["id", "name", "stage_id", "date_deadline", "user_ids"])
 ```
 
 List tasks in a project:
 ```
-odoo_search(model="project.task", domain=[("project_id.name", "ilike", "<project>")], fields=["id", "name", "stage_id", "date_deadline"], limit=20)
+odoo_search(model="project.task",
+  domain=[["project_id", "=", <project_id>]],
+  fields=["id", "name", "stage_id", "date_deadline"], limit=20)
 ```
 
 Return: name, stage, deadline, assignee.
@@ -118,7 +192,7 @@ odoo_write(model="project.task", ids=[<task_id>], values={
 
 Stages are **project-specific** in Odoo — always discover before writing.
 
-1. Get project ID (search if not known)
+1. Resolve `project_id` using the **Resolve Project Name** algorithm.
 2. Discover available stages for the project:
    ```
    odoo_search(model="project.task.type", domain=[("project_ids", "in", [<project_id>])], fields=["id", "name"])
