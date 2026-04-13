@@ -45,6 +45,7 @@ This is Alice's **master routing index**. Scan this file first to identify which
 | Save structured notes or content to an Odoo task | "task notes", "save notes to task", "log to task", "add content to task", "update task description" | `skills/alice-odoo-task-notes.md` |
 | Check connectivity of Alice's services and MCP tools | "connection check", "check connection", "service status", "are services connected", "is alice connected" | `skills/alice-connection-check.md` |
 | Suggest what to eat — Vietnamese-focused meal suggestions | "what to eat", "suggest food", "ăn gì", "gợi ý món ăn", "suggest a meal", "hôm nay ăn gì" | `skills/alice-suggest-meal.md` |
+| Interactive first-time Alice setup — collect identity, write configs, copy memory templates | "setup alice", "initialize alice", "configure alice", "alice setup", "first time setup", "init alice" | `skills/alice-init.md` |
 | Install Alice skills globally | "install alice", "install alice skills", "make alice skills global" | `skills/alice-install.md` |
 | Uninstall Alice global skills | "uninstall alice", "uninstall alice skills", "remove alice skills" | `skills/alice-uninstall.md` |
 | Global wrapper: read/analyse CSV from any project (`/alice-read-csv`) | (same as read-csv) | `skills/alice-read-csv.md` |
@@ -89,4 +90,4 @@ When Alice creates a new skill, memory file, or uses a new MCP:
 - Keep descriptions short — this file must stay scannable
 
 ---
-*Last updated: 2026-04-08 (connection check skill added)*
+*Last updated: 2026-04-13 (alice-init skill added)*
