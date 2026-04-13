@@ -19,7 +19,7 @@ This file documents all MCP (Model Context Protocol) servers and tools available
 ### claude.ai Gmail
 - **Status:** active
 - **MCP type:** Remote — hosted by Anthropic, authenticated via Claude.ai session
-- **Purpose:** Read and search Gmail inbox for the account vinh.nguyen@inapps.net
+- **Purpose:** Read and search Gmail inbox for the configured account
 - **Key tools:** `gmail_search_messages`, `gmail_read_message`, `gmail_get_profile`, `gmail_list_labels`, `gmail_list_drafts`, `gmail_create_draft`, `gmail_read_thread`
 - **Use for:** Single actions in conversation (read one email, search, draft)
 - **Python equivalent:** `google-api-python-client` with `credentials/google_token.json` — use for batch/multi-step scripts
@@ -33,7 +33,7 @@ This file documents all MCP (Model Context Protocol) servers and tools available
 - **Key tools:** `gcal_list_events`, `gcal_get_event`, `gcal_create_event`, `gcal_update_event`, `gcal_delete_event`, `gcal_list_calendars`, `gcal_find_meeting_times`, `gcal_find_my_free_time`, `gcal_respond_to_event`
 - **Use for:** Single actions in conversation (create one event, check schedule)
 - **Python equivalent:** `google-api-python-client` with `credentials/google_token.json` — same credential as Gmail
-- **Notes:** Same Google account as Gmail (vinh.nguyen@inapps.net). Python scripts cannot connect to this MCP directly.
+- **Notes:** Same Google account as Gmail. Python scripts cannot connect to this MCP directly.
 
 ### claude.ai Canva
 - **Status:** active

@@ -48,7 +48,7 @@ Use `gcal_create_event` with:
 - `summary`: clear title reflecting the objective
 - `description`: include the pre-information / agenda if provided
 - `attendees`: user + all invitees (include user's own email with `organizer: true`)
-- `timeZone`: `{TIMEZONE}`
+- `timeZone`: `{USER_TIMEZONE}`
 - `sendUpdates`: `"all"` — always notify attendees
 
 ### Step 4 — Confirm to user
@@ -98,6 +98,6 @@ Use `gcal_update_event`. Include the reason in the updated event description if 
 
 ## Notes
 
-- Timezone is always `{TIMEZONE}` unless user specifies otherwise
+- Timezone is always `{USER_TIMEZONE}` unless user specifies otherwise
 - Default meeting duration is {MEETING_DURATION_HOURS} hour(s) unless specified
 - Add Google Meet for external/remote attendees: `{ADD_GOOGLE_MEET_FOR_EXTERNAL}`

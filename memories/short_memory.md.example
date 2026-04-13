@@ -1,0 +1,16 @@
+# Short Memory — Rolling 5-Day Context
+
+> **Setup:** Copy this file to `short_memory.md`.
+> `short_memory.md` is gitignored — Alice writes to it automatically during sessions.
+
+This file is Alice's **primary read target at the start of every session**. It captures the last ~5 days of conversation context, active work, and recent decisions. Alice should be able to understand the current situation from this file alone without reading long memory files.
+
+Entries older than 5 days are pruned on each compact.
+
+---
+
+*(Alice will populate this automatically as you use her.)*
+
+---
+*Last updated: (fill in)*
+*Updated by: Alice*

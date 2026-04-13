@@ -2,6 +2,17 @@
   "_readme": "Copy this file to skill-personal.json and fill in your own values. skill-personal.json is gitignored — never commit it.",
   "_usage": "Tokens in skill files (e.g. {CONTACTS}, {TIMEZONE}) are substituted with values from this file when the skill is installed globally via install.py.",
 
+  "_user": {
+    "_note": "Global identity — available to ALL skills. Tokens: {USER_NAME}, {USER_EMAIL}, {USER_TIMEZONE}, {USER_ROLE}, {USER_ORG}, {USER_LOCATION}, {USER_LANGUAGE}",
+    "name": "Your Full Name",
+    "email": "you@example.com",
+    "timezone": "UTC",
+    "language": "en",
+    "role": "Your Job Title",
+    "organization": "Your Company",
+    "location": "Your City, Country"
+  },
+
   "alice-suggest-meal": {
     "disliked_ingredients": [],
     "dietary_restrictions": [],
@@ -10,6 +21,7 @@
   },
 
   "alice-book-meeting": {
+    "_timezone_note": "Deprecated — use _user.timezone instead. Kept for backward compatibility.",
     "timezone": "Asia/Ho_Chi_Minh",
     "default_duration_hours": 1,
     "add_google_meet_for_external": true,

@@ -111,5 +111,5 @@ claude "list all Odoo projects"
 
 ---
 
-*MCP server maintained by: Vinh Nguyen*
+*MCP server maintained by: InApps Technology*
 *Server: `https://erp.inapps.net/mcp/` (EC2, always-on)*

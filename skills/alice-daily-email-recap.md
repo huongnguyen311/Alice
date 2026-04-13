@@ -18,6 +18,8 @@ script: "{ALICE_ROOT}/auto-scripts/daily_email_recap.py"
 
 Fetches today's Gmail inbox via the Google API, formats a summary (unread first), saves output to `{ALICE_ROOT}/data/outputs/email_recap_YYYYMMDD.txt`, and logs the run.
 
+Gmail account: `{USER_EMAIL}` (timezone: `{USER_TIMEZONE}`)
+
 Runs automatically at 08:32 daily via the system scheduler — this skill is for on-demand runs or checking output from another project.
 
 ---
