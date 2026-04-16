@@ -1,6 +1,5 @@
 # Credentials & secrets — never commit these
 credentials/*
-!credentials/google_credentials.json
 
 # Runtime data — logs, outputs, tokens
 data/
