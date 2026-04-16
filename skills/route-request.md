@@ -61,6 +61,7 @@ Known trigger patterns (from skill frontmatter):
 | `alice-odoo-task-notes.md` | odoo | "save notes to task", "add notes to the task", "log this to the task", "task notes", "update task description", "add content to task" |
 | `alice-connection-check.md` | core | "connection check", "check connection", "check connections", "service status", "are services connected", "is alice connected", "check integrations", "verify connections", "ping services" |
 | `alice-suggest-meal.md` | personal | "what should I eat", "suggest food", "what to eat", "ăn gì", "gợi ý món ăn", "hôm nay ăn gì", "đề xuất bữa ăn", "suggest a meal" |
+| `skills/Google-Sheet/skill.md` | data | "google sheet", "google sheets", "spreadsheet", "sheet", "đọc sheet", "ghi sheet", "cập nhật sheet", "thêm vào sheet", "xóa dòng", "tìm trong sheet", "mở sheet", "open sheet", "mở google sheet", "tạo sheet mới", "xóa sheet tab" |
 | `alice-init.md` | meta | "setup alice", "initialize alice", "alice setup", "configure alice", "first time setup", "init alice", "run setup" |
 | `alice-git-sync.md` | automation | "sync with main", "merge main", "update from main", "pull from main", "sync my branch", "get latest changes", "bring in changes from main", "I'm behind main", "update my branch" |
 

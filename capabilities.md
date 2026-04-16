@@ -45,6 +45,7 @@ This is Alice's **master routing index**. Scan this file first to identify which
 | Save structured notes or content to an Odoo task | "task notes", "save notes to task", "log to task", "add content to task", "update task description" | `skills/alice-odoo-task-notes.md` |
 | Check connectivity of Alice's services and MCP tools | "connection check", "check connection", "service status", "are services connected", "is alice connected" | `skills/alice-connection-check.md` |
 | Suggest what to eat — Vietnamese-focused meal suggestions | "what to eat", "suggest food", "ăn gì", "gợi ý món ăn", "suggest a meal", "hôm nay ăn gì" | `skills/alice-suggest-meal.md` |
+| Read, write, update, delete, search, open Google Sheets | "google sheet", "spreadsheet", "sheet", "đọc sheet", "ghi sheet", "cập nhật sheet", "thêm vào sheet", "xóa dòng", "tìm trong sheet", "mở sheet", "open sheet" | `skills/Google-Sheet/skill.md` |
 | Interactive first-time Alice setup — collect identity, write configs, copy memory templates | "setup alice", "initialize alice", "configure alice", "alice setup", "first time setup", "init alice" | `skills/alice-init.md` |
 | Install Alice skills globally | "install alice", "install alice skills", "make alice skills global" | `skills/alice-install.md` |
 | Uninstall Alice global skills | "uninstall alice", "uninstall alice skills", "remove alice skills" | `skills/alice-uninstall.md` |
@@ -64,6 +65,7 @@ This is Alice's **master routing index**. Scan this file first to identify which
 | Email / Gmail | "email", "inbox", "message", "gmail", "draft", "thread" | `mcp__claude_ai_Gmail__` | `google-api-python-client` + `credentials/google_token.json` | Single read/search/draft | Batch, loop, summarise many |
 | Calendar | "calendar", "meeting", "event", "schedule", "availability", "slot" | `mcp__claude_ai_Google_Calendar__` | `google-api-python-client` + `credentials/google_token.json` | Single event create/read | Multi-event, availability scan |
 | Design / Canva | "design", "canva", "poster", "visual", "banner", "image" | `mcp__claude_ai_Canva__` | Canva REST API + `credentials/canva_api_key.txt` | Interactive design work | Batch design operations |
+| Google Sheets | "sheet", "google sheet", "spreadsheet" | — | `google-api-python-client` + `credentials/google_token.json` | Never — use Python skill | Always — see `skills/Google-Sheet/skill.md` |
 | Local data | "csv", "log", "output", "data file" | — | `pathlib`, `csv`, `json` (built-in) | Never — no MCP for local files | Always |
 | Python scripts | "run", "execute", "auto-script" | — | `subprocess` or FastAPI `/run/` | Never | Always |
 | Odoo ERP | "task", "project", "odoo", "erp", "stage", "crm" | `mcp__odoo__` | No Python equivalent — use MCP directly | Single record operations | Batch exports via Odoo REST API |
@@ -91,4 +93,4 @@ When Alice creates a new skill, memory file, or uses a new MCP:
 - Keep descriptions short — this file must stay scannable
 
 ---
-*Last updated: 2026-04-13 (alice-git-sync skill added)*
+*Last updated: 2026-04-16 (Google Sheets CRUD skill added; alice-init and alice-git-sync skills added)*

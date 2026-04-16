@@ -1,12 +1,12 @@
 """
 Google OAuth Setup — generates credentials/google_token.json
-Run once before using any Gmail or Calendar Python scripts.
+Run once before using any Gmail, Calendar, or Google Sheets Python scripts.
 
 Prerequisites:
 1. Go to Google Cloud Console → APIs & Services → Credentials
 2. Create an OAuth 2.0 Client ID (Desktop app)
 3. Download the JSON and save it as: credentials/google_credentials.json
-4. Enable Gmail API and Google Calendar API in your project
+4. Enable Gmail API, Google Calendar API, and Google Sheets API in your project
 
 Usage:
     python setup/google_auth_setup.py
@@ -23,6 +23,8 @@ import pickle
 SCOPES = [
     "https://www.googleapis.com/auth/gmail.modify",
     "https://www.googleapis.com/auth/calendar",
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/drive.readonly",
 ]
 
 BASE_DIR = Path(__file__).parent.parent

@@ -90,6 +90,14 @@
       "mcp_required": null,
       "warning": null,
       "enabled": true
+    },
+    {
+      "name": "alice-google-sheet",
+      "file": "Google-Sheet/skill.md",
+      "type": "python",
+      "mcp_required": null,
+      "warning": null,
+      "enabled": true
     }
   ]
 }
