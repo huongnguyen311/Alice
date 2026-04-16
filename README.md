@@ -80,3 +80,38 @@ Server runs at `http://localhost:8000`. API docs at `http://localhost:8000/docs`
 - **Autonomous** — she updates herself without always being asked
 - **Local-first** — everything stays on your machine
 - **Markdown + CSV only** — no databases, no setup, human-readable files
+
+---
+
+## Setup (first time)
+
+Personal files are gitignored — you need to copy the example files and fill in your own values.
+
+**1. Personal config** (identity, contacts, timezone):
+```bash
+cp config/skill-personal.json.example config/skill-personal.json
+cp config/install-config.json.example config/install-config.json
+```
+Edit `config/skill-personal.json` — fill in your name, email, timezone, etc. in the `_user` section.
+
+**2. Personal memory files** (Alice reads these to know who you are):
+```bash
+cp memories/user_profile.md.example memories/user_profile.md
+cp memories/reference.md.example    memories/reference.md
+cp memories/short_memory.md.example memories/short_memory.md
+cp memories/project.md.example      memories/project.md
+```
+Edit `memories/user_profile.md` — fill in your name, role, location, and preferences.
+
+**3. Install skills globally:**
+```bash
+python auto-scripts/install.py
+```
+This bakes your personal config into the installed skill copies at `~/.claude/skills/`.
+
+**4. (Optional) Google API access** — for Gmail and Calendar Python scripts:
+```bash
+python setup/google_auth_setup.py
+```
+
+> Full platform-specific guide: `setup/SETUP-MAC.md` or `setup/SETUP-WINDOWS.md`

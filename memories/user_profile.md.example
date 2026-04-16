@@ -5,15 +5,22 @@ description: User identity, preferences, communication style, and behavioral pat
 
 # User Profile
 
+> **Setup:** Copy this file to `user_profile.md` and fill in your own values.
+> `user_profile.md` is gitignored — never commit it.
+
 ## Identity
-- **Name:** *(to be filled in)*
-- **Role:** *(to be filled in)*
-- **Location:** *(to be filled in)*
+- **Name:** Your Full Name
+- **Email:** you@example.com
+- **Role:** Your Job Title
+- **Organization:** Your Company
+- **Location:** Your City, Country
+- **Timezone:** UTC
+- **Language:** en
 
 ## Preferences
 - **Communication style:** *(e.g. concise, detailed, casual, formal)*
 - **Report format:** *(e.g. short summaries, bullet points, full narrative)*
-- **Working hours:** *(to be filled in)*
+- **Working hours:** *(e.g. 9am–6pm Mon–Fri)*
 
 ## Behavioral Patterns
 - Gives behavioural instructions mid-conversation and expects Alice to update her own profile immediately
@@ -22,11 +29,11 @@ description: User identity, preferences, communication style, and behavioral pat
 - Values self-contained documentation — no dangling references to other files
 
 ## Known Interests & Goals
-- Building and sharing Alice as a reusable personal AI assistant platform
+- *(What are you building or working on with Alice?)*
 
 ## Notes
-- *(Anything else Alice should always remember about this user)*
+- *(Anything else Alice should always remember about you)*
 
 ---
-*Last updated: 2026-03-24*
-*Updated by: Alice (compact)*
+*Last updated: (fill in)*
+*Updated by: Alice*

@@ -1,0 +1,47 @@
+---
+type: project
+description: Ongoing decisions, active work, open questions, and key milestones for Alice and user projects
+---
+
+# Project Memory
+
+> **Setup:** Copy this file to `project.md`.
+> `project.md` is gitignored — Alice writes to it automatically as projects evolve.
+
+## Current Status
+
+*(Alice will populate this as you start working.)*
+
+---
+
+## Key Decisions
+
+| Date | Decision | Why | Status |
+|---|---|---|---|
+| 2026-03-24 | Python + FastAPI for automations | No third-party platforms (Make, N8N, Zapier) | Confirmed |
+| 2026-03-24 | Three running modes (Inactive / MCP-triggered / Scheduled) | Covers all automation patterns | Confirmed |
+| 2026-03-24 | Markdown-first storage, CSV for structured data | Local-only, no database | Confirmed |
+
+---
+
+## Active Tasks
+
+- None.
+
+---
+
+## Open / Pending
+
+- *(Alice will add items here as they arise.)*
+
+---
+
+## Active Projects (User-side)
+
+| Project | Status | Notes |
+|---|---|---|
+| *(none yet)* | — | — |
+
+---
+*Last updated: (fill in)*
+*Updated by: Alice*

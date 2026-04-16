@@ -8,6 +8,13 @@ data/
 config/install-config.json
 config/skill-personal.json
 
+# Alice personal memory files — contain real identity/context data, gitignored
+# Copy the *.example counterpart and fill in your own values.
+memories/user_profile.md
+memories/reference.md
+memories/short_memory.md
+memories/project.md
+
 # Claude Code local settings & runtime files
 .claude/settings.local.json
 .claude/scheduled_tasks.lock

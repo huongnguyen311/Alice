@@ -46,8 +46,10 @@ This is Alice's **master routing index**. Scan this file first to identify which
 | Check connectivity of Alice's services and MCP tools | "connection check", "check connection", "service status", "are services connected", "is alice connected" | `skills/alice-connection-check.md` |
 | Suggest what to eat — Vietnamese-focused meal suggestions | "what to eat", "suggest food", "ăn gì", "gợi ý món ăn", "suggest a meal", "hôm nay ăn gì" | `skills/alice-suggest-meal.md` |
 | Read, write, update, delete, search, open Google Sheets | "google sheet", "spreadsheet", "sheet", "đọc sheet", "ghi sheet", "cập nhật sheet", "thêm vào sheet", "xóa dòng", "tìm trong sheet", "mở sheet", "open sheet" | `skills/Google-Sheet/skill.md` |
+| Interactive first-time Alice setup — collect identity, write configs, copy memory templates | "setup alice", "initialize alice", "configure alice", "alice setup", "first time setup", "init alice" | `skills/alice-init.md` |
 | Install Alice skills globally | "install alice", "install alice skills", "make alice skills global" | `skills/alice-install.md` |
 | Uninstall Alice global skills | "uninstall alice", "uninstall alice skills", "remove alice skills" | `skills/alice-uninstall.md` |
+| Merge main into current branch for non-dev users — plain-English guidance, auto-fix safe conflicts, escalate complex ones | "sync with main", "merge main", "update from main", "sync my branch", "get latest changes" | `skills/alice-git-sync.md` |
 | Global wrapper: read/analyse CSV from any project (`/alice-read-csv`) | (same as read-csv) | `skills/alice-read-csv.md` |
 | Global wrapper: build Alice automation script from any project (`/alice-build-script`) | (same as build-script) | `skills/alice-build-script.md` |
 | Global wrapper: run/schedule Alice automation from any project (`/alice-run-automation`) | (same as run-automation) | `skills/alice-run-automation.md` |
@@ -91,4 +93,4 @@ When Alice creates a new skill, memory file, or uses a new MCP:
 - Keep descriptions short — this file must stay scannable
 
 ---
-*Last updated: 2026-04-16 (Google Sheets CRUD skill added)*
+*Last updated: 2026-04-16 (Google Sheets CRUD skill added; alice-init and alice-git-sync skills added)*
