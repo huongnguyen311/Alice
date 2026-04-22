@@ -90,6 +90,22 @@
       "mcp_required": null,
       "warning": null,
       "enabled": true
+    },
+    {
+      "name": "alice-scope-detail",
+      "file": "alice-scope-detail.md",
+      "type": "mcp",
+      "mcp_required": null,
+      "warning": null,
+      "enabled": true
+    },
+    {
+      "name": "alice-write-tcs",
+      "file": "alice-write-tcs.md",
+      "type": "mcp",
+      "mcp_required": null,
+      "warning": null,
+      "enabled": true
     }
   ]
 }

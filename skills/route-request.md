@@ -63,6 +63,7 @@ Known trigger patterns (from skill frontmatter):
 | `alice-suggest-meal.md` | personal | "what should I eat", "suggest food", "what to eat", "ăn gì", "gợi ý món ăn", "hôm nay ăn gì", "đề xuất bữa ăn", "suggest a meal" |
 | `alice-init.md` | meta | "setup alice", "initialize alice", "alice setup", "configure alice", "first time setup", "init alice", "run setup" |
 | `alice-git-sync.md` | automation | "sync with main", "merge main", "update from main", "pull from main", "sync my branch", "get latest changes", "bring in changes from main", "I'm behind main", "update my branch" |
+| `alice-scope-detail.md` | meta | "write scope detail", "expand scope", "scope detail", "scope specification", "write specification from scope", "detail this scope", "expand this feature scope" |
 
 > Update this table whenever a new skill is added with `triggers:` frontmatter.
 

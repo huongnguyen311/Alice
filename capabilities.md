@@ -52,6 +52,7 @@ This is Alice's **master routing index**. Scan this file first to identify which
 | Global wrapper: read/analyse CSV from any project (`/alice-read-csv`) | (same as read-csv) | `skills/alice-read-csv.md` |
 | Global wrapper: build Alice automation script from any project (`/alice-build-script`) | (same as build-script) | `skills/alice-build-script.md` |
 | Global wrapper: run/schedule Alice automation from any project (`/alice-run-automation`) | (same as run-automation) | `skills/alice-run-automation.md` |
+| Expand a brief scope into a structured specification document | "write scope detail", "expand scope", "scope detail", "scope specification", "detail this scope" | `skills/alice-scope-detail.md` |
 
 > **Rule:** Skills with matching `triggers:` frontmatter are loaded implicitly (see `skills/route-request.md` Step 3). This table is the fallback when no trigger match is found. Do not preload all skills.
 
@@ -91,4 +92,4 @@ When Alice creates a new skill, memory file, or uses a new MCP:
 - Keep descriptions short — this file must stay scannable
 
 ---
-*Last updated: 2026-04-13 (alice-git-sync skill added)*
+*Last updated: 2026-04-16 (alice-scope-detail skill added)*
