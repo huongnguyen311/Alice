@@ -405,6 +405,138 @@ def write_report(
     output_path.write_text("\n".join(lines), encoding="utf-8")
 
 
+# ── Orchestrator ─────────────────────────────────────────────────────────────
+
+def run_tc(client, page, tc: dict, base_url: str, stop_on_fail: bool, screenshot_dir: Path) -> dict:
+    """
+    Run a single TC: interpret steps → execute actions → collect results.
+
+    Returns a TC result dict with keys: id, name, status, duration_s, steps
+    """
+    import time
+
+    actions = interpret_steps(client, tc["steps_raw"], tc["test_data"])
+
+    step_results = []
+    tc_status = "PASS"
+    start = time.time()
+
+    for action in actions:
+        result = execute_action(page, action, base_url)
+        step_results.append(result)
+
+        if result["status"] in ("FAIL", "ERROR"):
+            tc_status = result["status"]
+            # Take screenshot on fail
+            try:
+                screenshot_dir.mkdir(parents=True, exist_ok=True)
+                shot_path = screenshot_dir / f"{tc['id']}-step-{len(step_results)}.png"
+                page.screenshot(path=str(shot_path))
+            except Exception:
+                pass
+
+            if stop_on_fail:
+                # Mark remaining actions as SKIP
+                remaining = actions[len(step_results):]
+                for remaining_action in remaining:
+                    step_results.append({
+                        "action": remaining_action.get("action", ""),
+                        "target": remaining_action.get("target", ""),
+                        "status": "SKIP",
+                        "actual": "",
+                        "error": "Skipped due to --stop-on-fail",
+                        "screenshot_hint": False,
+                    })
+                break
+
+        elif result["status"] == "WARN" and tc_status == "PASS":
+            tc_status = "WARN"
+
+    duration = time.time() - start
+
+    return {
+        "id": tc["id"],
+        "name": tc["name"],
+        "status": tc_status,
+        "duration_s": round(duration, 2),
+        "steps": step_results,
+    }
+
+
+def main() -> None:
+    import anthropic
+    from playwright.sync_api import sync_playwright
+
+    parser = argparse.ArgumentParser(description="Alice Web Automation Executor")
+    parser.add_argument("--tc-file", required=True, help="Path to TC Markdown file")
+    parser.add_argument("--url", required=True, help="Base URL to test against")
+    parser.add_argument("--stop-on-fail", action="store_true",
+                        help="Stop TC execution on first failing step")
+    args = parser.parse_args()
+
+    tc_path = Path(args.tc_file)
+    if not tc_path.exists():
+        print(f"ERROR: TC file not found: {tc_path}", file=sys.stderr)
+        sys.exit(1)
+
+    base_url = args.url.rstrip("/")
+
+    # Parse TCs
+    content = tc_path.read_text(encoding="utf-8")
+    tcs = parse_tc_markdown(content)
+    if not tcs:
+        print("ERROR: No test cases found in file.", file=sys.stderr)
+        sys.exit(1)
+
+    print(f"Found {len(tcs)} test case(s) in {tc_path.name}")
+
+    slug = tc_path.stem
+    run_date = datetime.now().strftime("%Y-%m-%d")
+    report_path = tc_path.parent / f"{slug}-results-{run_date}.md"
+    screenshot_dir = Path("data/screenshots") / slug
+
+    # Init Claude client
+    api_key = os.environ.get("ANTHROPIC_API_KEY", "")
+    client = anthropic.Anthropic(api_key=api_key) if api_key else anthropic.Anthropic()
+
+    # Run with Playwright
+    results = []
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch(headless=True)
+        page = browser.new_page()
+
+        # Check URL reachable
+        try:
+            page.goto(base_url, timeout=15000)
+        except Exception as e:
+            print(f"ERROR: URL unreachable — {e}", file=sys.stderr)
+            browser.close()
+            sys.exit(1)
+
+        for tc in tcs:
+            print(f"  Running {tc['id']}: {tc['name']} ...", end=" ", flush=True)
+            result = run_tc(client, page, tc, base_url, args.stop_on_fail, screenshot_dir)
+            results.append(result)
+            print(result["status"])
+
+        browser.close()
+
+    # Write report
+    write_report(
+        results=results,
+        output_path=report_path,
+        url=base_url,
+        tc_file=str(tc_path),
+        stop_on_fail=args.stop_on_fail,
+        run_date=run_date,
+    )
+
+    passed = sum(1 for r in results if r["status"] == "PASS")
+    failed = sum(1 for r in results if r["status"] in ("FAIL", "ERROR"))
+    print(f"\nResults: {passed}/{len(results)} passed, {failed} failed")
+    print(f"Report:  {report_path}")
+
+
 # ── Bootstrap ────────────────────────────────────────────────────────────────
 
 def _bootstrap() -> None:
@@ -414,3 +546,4 @@ def _bootstrap() -> None:
 
 if __name__ == "__main__":
     _bootstrap()
+    main()
