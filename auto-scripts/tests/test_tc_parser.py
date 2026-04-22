@@ -41,3 +41,17 @@ def test_parse_skips_non_tc_rows():
     tcs = parse_tc_markdown(md)
     assert len(tcs) == 1
     assert tcs[0]["id"] == "TC-01"
+
+def test_parse_empty_input():
+    tcs = parse_tc_markdown("")
+    assert tcs == []
+
+def test_parse_header_only():
+    md = "| TC ID | Name | Module | Priority | Type | Test Data | Steps | Expected Result |\n|---|---|---|---|---|---|---|---|"
+    tcs = parse_tc_markdown(md)
+    assert tcs == []
+
+def test_parse_short_row_skipped():
+    md = "| TC-01 | Name | Module | High | Func | data |"  # only 6 cells
+    tcs = parse_tc_markdown(md)
+    assert tcs == []

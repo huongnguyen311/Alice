@@ -30,10 +30,6 @@ def _ensure_pkg(pkg: str, install_name: str | None = None) -> None:
             check=True
         )
 
-_ensure_pkg("playwright")
-_ensure_pkg("anthropic")
-
-
 # ── TC Parser ────────────────────────────────────────────────────────────────
 
 def parse_tc_markdown(content: str) -> list[dict]:
@@ -47,17 +43,21 @@ def parse_tc_markdown(content: str) -> list[dict]:
     Non-TC sections (coverage matrix, headers) are ignored.
     """
     tcs = []
-    tc_pattern = re.compile(r"^TC-\d+$", re.IGNORECASE)
+    tc_pattern = re.compile(r"^TC-\d+$")
 
     for line in content.splitlines():
         line = line.strip()
-        # Must be a pipe-delimited row with at least 8 cells
-        if not line.startswith("|") or line.startswith("|---"):
+        # Must be a pipe-delimited row
+        if not line.startswith("|"):
             continue
         cells = [c.strip() for c in line.strip("|").split("|")]
+        # Skip separator rows (detect dashes in any cell)
+        if any(re.fullmatch(r"-+", c) for c in cells):
+            continue
+        # Must have at least 8 cells
         if len(cells) < 8:
             continue
-        tc_id = cells[0].strip()
+        tc_id = cells[0].strip().upper()
         if not tc_pattern.match(tc_id):
             continue
 
@@ -73,3 +73,14 @@ def parse_tc_markdown(content: str) -> list[dict]:
         })
 
     return tcs
+
+
+# ── Bootstrap ────────────────────────────────────────────────────────────────
+
+def _bootstrap() -> None:
+    _ensure_pkg("playwright")
+    _ensure_pkg("anthropic")
+
+
+if __name__ == "__main__":
+    _bootstrap()
