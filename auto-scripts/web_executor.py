@@ -75,6 +75,87 @@ def parse_tc_markdown(content: str) -> list[dict]:
     return tcs
 
 
+# ── Step Interpreter ─────────────────────────────────────────────────────────
+
+SYSTEM_PROMPT = """You are a QA automation step interpreter.
+
+Your job is to convert test steps written in natural language into a list of structured JSON actions.
+
+You MUST:
+- Output ONLY a valid JSON array (no explanation, no extra text, no markdown fences)
+- Follow the exact schema provided
+- Choose the most appropriate action type
+- Normalize target names into snake_case
+- Infer missing values ONLY if highly confident
+- If uncertain, mark "confidence" < 0.6
+
+DO NOT:
+- Invent UI elements that are not implied
+- Combine multiple steps into one action
+- Return plain text or markdown
+
+Action types allowed: navigate, click, fill, select, verify, wait
+
+Action mapping rules:
+- "open / go to / navigate" → navigate
+- "click / press / tap" → click
+- "enter / input / type / fill" → fill
+- "select / choose" → select
+- "verify / check / should / assert" → verify
+- "wait" → wait
+
+Assertion type mapping (for verify actions):
+- "redirect / url" → {"type": "url", "expected": "<url>"}
+- "display / show / visible" → {"type": "text_visible", "expected": "<text>"}
+- "exist / present" → {"type": "element_exists", "expected": ""}
+- "disabled" → {"type": "state_disabled", "expected": ""}
+
+Output schema for each action:
+{
+  "action": "",
+  "target": "",
+  "value": "",
+  "url": "",
+  "assertion": {"type": "", "expected": ""},
+  "confidence": 0.0
+}
+
+Return a JSON array of actions — one per step. Nothing else."""
+
+
+def interpret_steps(client, steps_raw: str, test_data: str) -> list[dict]:
+    """
+    Call Claude API to convert raw step text into a list of JSON action dicts.
+
+    Returns a list of action dicts. On API failure, returns a single error action dict.
+    """
+    user_prompt = f"""Convert the following test steps into a JSON array of actions.
+
+Steps:
+{steps_raw}
+
+Test Data (if any):
+{test_data}
+
+Return ONLY the JSON array. No markdown, no explanation."""
+
+    try:
+        message = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=2048,
+            system=SYSTEM_PROMPT,
+            messages=[{"role": "user", "content": user_prompt}],
+        )
+        raw = message.content[0].text.strip()
+        # Strip markdown fences if present
+        raw = re.sub(r"^```(?:json)?\n?", "", raw)
+        raw = re.sub(r"\n?```$", "", raw)
+        return json.loads(raw)
+    except Exception as e:
+        return [{"action": "error", "error": str(e), "confidence": 0.0,
+                 "target": "", "value": "", "url": "", "assertion": {"type": "", "expected": ""}}]
+
+
 # ── Bootstrap ────────────────────────────────────────────────────────────────
 
 def _bootstrap() -> None:
