@@ -74,6 +74,7 @@ def test_write_report_stats_row():
         content = out_path.read_text(encoding="utf-8")
         assert "2026-04-22" in content
         assert "https://example.com" in content
+        assert "| 2 | 1 | 1 | 0 | 0 | 0 |" in content
 
 def test_write_report_creates_parent_dirs():
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -101,3 +102,18 @@ def test_write_report_stop_on_fail_flag_reflected():
         )
         content = out_path.read_text(encoding="utf-8")
         assert "Yes" in content
+
+def test_write_report_empty_results():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        out_path = Path(tmpdir) / "report.md"
+        write_report(
+            results=[],
+            output_path=out_path,
+            url="https://example.com",
+            tc_file="docs/tcs/login-tcs.md",
+            stop_on_fail=False,
+            run_date="2026-04-22",
+        )
+        assert out_path.exists()
+        content = out_path.read_text()
+        assert "| 0 | 0 | 0 | 0 | 0 | 0 |" in content

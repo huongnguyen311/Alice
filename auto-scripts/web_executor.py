@@ -397,7 +397,7 @@ def write_report(
             lines.append(f"| {i} | {step['action']} | {step.get('target', '')} | {s_emoji} {step['status']} | {detail} |")
 
         if any(s.get("screenshot_hint") for s in r.get("steps", [])):
-            lines += ["", f"> Screenshots saved to `data/screenshots/{Path(tc_file).stem}/`"]
+            lines += ["", f"> Screenshots saved to `data/screenshots/{r['id'].lower()}/`"]
 
     lines += ["", "---", ""]
 
