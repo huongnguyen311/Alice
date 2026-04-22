@@ -191,7 +191,7 @@ def _build_url(base_url: str, url_fragment: str) -> str:
     """Combine base URL with a relative or absolute URL fragment."""
     if not url_fragment:
         return base_url
-    if url_fragment.startswith("http"):
+    if url_fragment.startswith(("http://", "https://")):
         return url_fragment
     return base_url.rstrip("/") + "/" + url_fragment.lstrip("/")
 
@@ -224,6 +224,9 @@ def execute_action(page, action: dict, base_url: str) -> dict:
         return {**base_result, "status": "ERROR", "error": action.get("error", "Unknown interpreter error")}
 
     # Low confidence — attempt but warn
+    # WARN only applies when the action SUCCEEDS with low confidence.
+    # If execution raises an exception, the except block returns FAIL directly,
+    # bypassing this flag. FAIL always takes precedence over WARN.
     warn_after = confidence < 0.6
 
     try:
@@ -285,7 +288,7 @@ def execute_action(page, action: dict, base_url: str) -> dict:
                 if expected not in actual_url:
                     raise Exception(f"URL assertion failed: expected '{expected}' in '{actual_url}'")
             elif atype == "text_visible":
-                locator = page.get_by_text(expected)
+                locator = page.get_by_text(expected).first
                 if not locator.is_visible():
                     raise Exception(f"Text '{expected}' not visible on page")
                 base_result["actual"] = f"Text '{expected}' visible"
@@ -300,17 +303,22 @@ def execute_action(page, action: dict, base_url: str) -> dict:
                 else:
                     raise Exception(f"Element '{target}' not found")
             elif atype == "state_disabled":
+                matched_selector = None
                 for selector in _resolve_locator(target):
                     try:
-                        if page.locator(selector).is_disabled():
-                            base_result["actual"] = f"Element '{selector}' is disabled"
+                        loc = page.locator(selector)
+                        if loc.count() > 0:
+                            matched_selector = selector
                             break
                     except Exception:
                         continue
-                else:
-                    raise Exception(f"Element '{target}' is not disabled or not found")
+                if matched_selector is None:
+                    raise Exception(f"Element '{target}' not found")
+                if not page.locator(matched_selector).is_disabled():
+                    raise Exception(f"Element '{target}' found but is not disabled")
+                base_result["actual"] = f"Element '{matched_selector}' is disabled"
             else:
-                base_result["actual"] = f"Unknown assertion type '{atype}' — skipped"
+                raise Exception(f"Unknown assertion type '{atype}'")
 
     except Exception as e:
         return {**base_result, "status": "FAIL", "error": str(e), "screenshot_hint": True}
