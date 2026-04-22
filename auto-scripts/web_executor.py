@@ -77,6 +77,8 @@ def parse_tc_markdown(content: str) -> list[dict]:
 
 # ── Step Interpreter ─────────────────────────────────────────────────────────
 
+DEFAULT_MODEL = "claude-haiku-4-5-20251001"
+
 SYSTEM_PROMPT = """You are a QA automation step interpreter.
 
 Your job is to convert test steps written in natural language into a list of structured JSON actions.
@@ -120,10 +122,17 @@ Output schema for each action:
   "confidence": 0.0
 }
 
-Return a JSON array of actions — one per step. Nothing else."""
+Return a JSON array of actions — one per step. Nothing else.
+
+Example output:
+[
+  {"action": "navigate", "target": "", "value": "", "url": "/login", "assertion": {"type": "", "expected": ""}, "confidence": 0.95},
+  {"action": "fill", "target": "username_field", "value": "admin", "url": "", "assertion": {"type": "", "expected": ""}, "confidence": 0.9}
+]
+"""
 
 
-def interpret_steps(client, steps_raw: str, test_data: str) -> list[dict]:
+def interpret_steps(client, steps_raw: str, test_data: str, model: str = DEFAULT_MODEL) -> list[dict]:
     """
     Call Claude API to convert raw step text into a list of JSON action dicts.
 
@@ -141,16 +150,21 @@ Return ONLY the JSON array. No markdown, no explanation."""
 
     try:
         message = client.messages.create(
-            model="claude-haiku-4-5-20251001",
+            model=model,
             max_tokens=2048,
             system=SYSTEM_PROMPT,
             messages=[{"role": "user", "content": user_prompt}],
         )
+        if not message.content:
+            raise ValueError("Claude returned an empty content list")
         raw = message.content[0].text.strip()
         # Strip markdown fences if present
-        raw = re.sub(r"^```(?:json)?\n?", "", raw)
-        raw = re.sub(r"\n?```$", "", raw)
-        return json.loads(raw)
+        raw = re.sub(r"^```[a-z]*\s*\n?", "", raw)
+        raw = re.sub(r"\n?\s*```$", "", raw)
+        result = json.loads(raw)
+        if not isinstance(result, list):
+            result = [result]
+        return result
     except Exception as e:
         return [{"action": "error", "error": str(e), "confidence": 0.0,
                  "target": "", "value": "", "url": "", "assertion": {"type": "", "expected": ""}}]

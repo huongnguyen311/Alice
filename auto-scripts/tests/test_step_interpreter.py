@@ -46,3 +46,38 @@ def test_interpret_steps_api_failure_returns_error():
     assert len(actions) == 1
     assert actions[0]["action"] == "error"
     assert "API error" in actions[0]["error"]
+
+
+def test_interpret_steps_malformed_json_returns_error():
+    mock_client = MagicMock()
+    mock_msg = MagicMock()
+    mock_msg.content = [MagicMock(text="Here are your steps: navigate to login")]
+    mock_client.messages.create.return_value = mock_msg
+
+    actions = interpret_steps(mock_client, STEPS_RAW, TEST_DATA)
+    assert len(actions) == 1
+    assert actions[0]["action"] == "error"
+
+
+def test_interpret_steps_single_object_normalised_to_list():
+    mock_client = MagicMock()
+    mock_msg = MagicMock()
+    single_action = MOCK_ACTIONS[0]
+    mock_msg.content = [MagicMock(text=json.dumps(single_action))]
+    mock_client.messages.create.return_value = mock_msg
+
+    actions = interpret_steps(mock_client, STEPS_RAW, TEST_DATA)
+    assert isinstance(actions, list)
+    assert len(actions) == 1
+
+
+def test_interpret_steps_passes_system_prompt():
+    from web_executor import SYSTEM_PROMPT
+    mock_client = MagicMock()
+    mock_msg = MagicMock()
+    mock_msg.content = [MagicMock(text=json.dumps(MOCK_ACTIONS))]
+    mock_client.messages.create.return_value = mock_msg
+
+    interpret_steps(mock_client, STEPS_RAW, TEST_DATA)
+    call_kwargs = mock_client.messages.create.call_args.kwargs
+    assert call_kwargs["system"] == SYSTEM_PROMPT
