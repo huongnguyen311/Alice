@@ -53,6 +53,7 @@ This is Alice's **master routing index**. Scan this file first to identify which
 | Global wrapper: build Alice automation script from any project (`/alice-build-script`) | (same as build-script) | `skills/alice-build-script.md` |
 | Global wrapper: run/schedule Alice automation from any project (`/alice-run-automation`) | (same as run-automation) | `skills/alice-run-automation.md` |
 | Expand a brief scope into a structured specification document | "write scope detail", "expand scope", "scope detail", "scope specification", "detail this scope" | `skills/alice-scope-detail.md` |
+| Run Playwright web automation tests from TC Markdown files against a live URL | "run tests on", "web test", "execute test cases", "test website", "web automation", "run automated tests" | `skills/alice-web-executor.md` |
 
 > **Rule:** Skills with matching `triggers:` frontmatter are loaded implicitly (see `skills/route-request.md` Step 3). This table is the fallback when no trigger match is found. Do not preload all skills.
 

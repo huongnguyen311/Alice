@@ -64,6 +64,7 @@ Known trigger patterns (from skill frontmatter):
 | `alice-init.md` | meta | "setup alice", "initialize alice", "alice setup", "configure alice", "first time setup", "init alice", "run setup" |
 | `alice-git-sync.md` | automation | "sync with main", "merge main", "update from main", "pull from main", "sync my branch", "get latest changes", "bring in changes from main", "I'm behind main", "update my branch" |
 | `alice-scope-detail.md` | meta | "write scope detail", "expand scope", "scope detail", "scope specification", "write specification from scope", "detail this scope", "expand this feature scope" |
+| `alice-web-executor.md` | automation | "run tests on", "execute test cases", "web automation", "run web executor", "test website", "execute TCs on", "web test", "run automated tests" |
 
 > Update this table whenever a new skill is added with `triggers:` frontmatter.
 

@@ -106,6 +106,14 @@
       "mcp_required": null,
       "warning": null,
       "enabled": true
+    },
+    {
+      "name": "alice-web-executor",
+      "file": "alice-web-executor.md",
+      "type": "python",
+      "mcp_required": null,
+      "warning": "Requires ANTHROPIC_API_KEY env var and Playwright chromium installed",
+      "enabled": true
     }
   ]
 }
