@@ -329,6 +329,82 @@ def execute_action(page, action: dict, base_url: str) -> dict:
     return base_result
 
 
+# ── Report Writer ────────────────────────────────────────────────────────────
+
+def write_report(
+    results: list[dict],
+    output_path: Path,
+    url: str,
+    tc_file: str,
+    stop_on_fail: bool,
+    run_date: str,
+) -> None:
+    """Write a Markdown test result report to output_path."""
+    total = len(results)
+    passed = sum(1 for r in results if r["status"] == "PASS")
+    failed = sum(1 for r in results if r["status"] == "FAIL")
+    errored = sum(1 for r in results if r["status"] == "ERROR")
+    skipped = sum(1 for r in results if r["status"] == "SKIP")
+    warned = sum(1 for r in results if r["status"] == "WARN")
+
+    status_emoji = {"PASS": "✅", "FAIL": "❌", "SKIP": "⏭️", "ERROR": "🔴", "WARN": "⚠️"}
+
+    lines = [
+        f"# Test Results: {Path(tc_file).stem}",
+        "",
+        f"> **URL:** {url}",
+        f"> **TC File:** {tc_file}",
+        f"> **Run Date:** {run_date}",
+        f"> **Stop on Fail:** {'Yes' if stop_on_fail else 'No'}",
+        f"> **Generated:** Alice Web Executor",
+        "",
+        "---",
+        "",
+        "## Summary",
+        "",
+        "| Total | Passed | Failed | Errors | Skipped | Warned |",
+        "|---|---|---|---|---|---|",
+        f"| {total} | {passed} | {failed} | {errored} | {skipped} | {warned} |",
+        "",
+        "---",
+        "",
+        "## Test Case Results",
+        "",
+        "| TC ID | Name | Status | Duration |",
+        "|---|---|---|---|",
+    ]
+
+    for r in results:
+        emoji = status_emoji.get(r["status"], "")
+        lines.append(f"| {r['id']} | {r['name']} | {emoji} {r['status']} | {r.get('duration_s', 0):.1f}s |")
+
+    lines += ["", "---", "", "## Detail"]
+
+    for r in results:
+        emoji = status_emoji.get(r["status"], "")
+        lines += [
+            "",
+            f"### {r['id']} — {r['name']} {emoji}",
+            "",
+            f"**Status:** {r['status']} | **Duration:** {r.get('duration_s', 0):.1f}s",
+            "",
+            "| Step | Action | Target | Status | Actual / Error |",
+            "|---|---|---|---|---|",
+        ]
+        for i, step in enumerate(r.get("steps", []), 1):
+            s_emoji = status_emoji.get(step["status"], "")
+            detail = step["error"] if step["error"] else step["actual"]
+            lines.append(f"| {i} | {step['action']} | {step.get('target', '')} | {s_emoji} {step['status']} | {detail} |")
+
+        if any(s.get("screenshot_hint") for s in r.get("steps", [])):
+            lines += ["", f"> Screenshots saved to `data/screenshots/{Path(tc_file).stem}/`"]
+
+    lines += ["", "---", ""]
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text("\n".join(lines), encoding="utf-8")
+
+
 # ── Bootstrap ────────────────────────────────────────────────────────────────
 
 def _bootstrap() -> None:
