@@ -426,7 +426,9 @@ def run_tc(client, page, tc: dict, base_url: str, stop_on_fail: bool, screenshot
         step_results.append(result)
 
         if result["status"] in ("FAIL", "ERROR"):
-            tc_status = result["status"]
+            # Lock in first terminal status — ERROR is not overwritten by a later FAIL
+            if tc_status not in ("FAIL", "ERROR"):
+                tc_status = result["status"]
             # Take screenshot on fail
             try:
                 screenshot_dir.mkdir(parents=True, exist_ok=True)
