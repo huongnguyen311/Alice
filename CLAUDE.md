@@ -143,7 +143,7 @@ Compact (`"compact now"`) also triggers: prune `short_memory.md` to 5 days, upda
 
 Follow these steps every time a new skill file is created:
 
-**1. Create the skill file** at `skills/<skill-name>.md` with required frontmatter:
+**1. Create the skill file** at `skills/<skill-name>.md` (flat) or `skills/<group>/<skill-name>.md` (grouped — see "When to group" below) with required frontmatter:
 ```yaml
 ---
 name: skill-name
@@ -154,14 +154,17 @@ triggers:
   - "another trigger phrase"
 ---
 ```
-**Rule:** The filename (without `.md`) must exactly match the `name:` field — no exceptions. E.g. `skills/alice-odoo-tasks.md` → `name: alice-odoo-tasks`.
+**Rule:** The file's **basename** (filename without `.md` and without any subdirectory) must exactly match the `name:` field — no exceptions. The `name:` field itself never contains slashes. E.g. `skills/alice-odoo-tasks.md` → `name: alice-odoo-tasks`; `skills/alice-odoo/alice-odoo-cache.md` → `name: alice-odoo-cache`.
 
 **Naming convention:**
-- **Filename must match the `name:` field — no exceptions.** `skills/alice-book-meeting.md` must have `name: alice-book-meeting`. A mismatch breaks routing, install lookups, and cross-references.
+- **Basename must match the `name:` field — no exceptions.** `skills/alice-book-meeting.md` must have `name: alice-book-meeting`; `skills/alice-odoo/alice-odoo-cache.md` must have `name: alice-odoo-cache`. A mismatch breaks routing, install lookups, and cross-references.
 - Internal skills (Alice-only): plain name — `read-csv.md` / `name: read-csv`, `save-memory.md` / `name: save-memory`
 - Global skills (installed to `~/.claude/skills/`): **always prefix with `alice-`** — `alice-book-meeting.md` / `name: alice-book-meeting`
 - The `alice-` prefix prevents global skills from shadowing same-named skills in other projects
 - Wrapper skills follow the same rule — `alice-build-script.md` / `name: alice-build-script`
+- **Grouping:** When ≥3 related skills share a domain (MCP, data source, or workflow), they MAY live in a subdirectory — e.g. `skills/alice-odoo/alice-odoo-{tasks,task-notes,timesheet,cache}.md`. The subdirectory name is purely organizational and does not appear in the `name:` field. Don't restructure existing groups just because they hit 3; only group when adding the third.
+- **Group directory naming:** Group directories MUST use the `alice-` prefix (e.g. `skills/alice-odoo/`, not `skills/odoo/`). Bare domain names like `skills/odoo/` are too generic and risk colliding with directories from other Alice-adjacent projects or plugins on the same machine. The `alice-` prefix at every level (group dir + skill name) keeps Alice's footprint scannable. Internal-only (non-globally-installed) groups MAY skip the prefix, but consistency is preferred.
+- **Legacy exception:** `skills/Google-Sheet/skill.md` does not follow the current basename rule (the file is `skill.md`, not `alice-google-sheet.md`). It is the lone pre-existing case; left as-is. New grouped skills must follow the rule.
 
 **Description scoping rule for global skills:**
 The `description:` field controls implicit auto-loading — Claude Code loads a skill whenever the description matches the user's request. For global skills this fires across ALL projects, so descriptions must be scoped to Alice:
@@ -187,7 +190,16 @@ The `description:` field controls implicit auto-loading — Claude Code loads a 
 **6. If globally installable — update install config:**
 - Add entry to `config/install-config.json.example` (committed)
 - Add entry to `config/install-config.json` (gitignored, personal)
+- The `"file"` field is the path relative to `skills/` — flat (`"alice-foo.md"`) or grouped (`"alice-odoo/alice-foo.md"`). `install.py` resolves either; the global install destination is always flattened to `~/.claude/skills/<name>/SKILL.md` regardless of source layout.
 - If the skill needs personal data tokens: add the token schema to `config/skill-personal.json.example` and implement substitution in `_apply_tokens()` in `auto-scripts/install.py`
+
+**Marker convention — DO NOT add `x-alice-*` keys to source skill files.**
+At install time, `install.py` injects three keys into the installed copy's frontmatter:
+- `x-alice-managed: true` — proof the file was installed by Alice
+- `x-alice-source: <absolute Alice repo path>` — which Alice install owns it
+- `x-alice-installed-at: <ISO 8601 timestamp>` — when
+
+These markers are install-time-only and enable safe cleanup of orphaned global skills (see `_prune_unmarked_orphans` in `install.py`). Source skill files MUST NOT contain `x-alice-*` keys — any pre-existing values will be stripped at install time anyway, but adding them to source confuses readers and breaks the "source is clean, install adds metadata" invariant.
 
 **7. If a wrapper skill was created** — also add it to `capabilities.md` and install configs (pointing to the `-global.md` file).
 

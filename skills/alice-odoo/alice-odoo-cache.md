@@ -1,0 +1,324 @@
+---
+name: alice-odoo-cache
+description: Local cache layer for Odoo MCP data in Alice — projects, stages, users, employees, field schemas. Lazy TTL refresh with fuzzy matching, self-warming on miss, force-refresh on request. Use this skill in Alice whenever an Odoo project/stage/user/employee lookup is needed.
+scope: odoo
+triggers:
+  - "resolve project name"
+  - "look up odoo stage"
+  - "find odoo user"
+  - "find odoo employee"
+  - "odoo field schema"
+  - "refresh odoo cache"
+  - "reload odoo cache"
+  - "refresh odoo projects"
+  - "refresh odoo stages"
+  - "refresh odoo users"
+  - "refresh odoo employees"
+  - "refresh odoo fields"
+  - "odoo cache is stale"
+mcp_required: odoo
+mcp_scope: global
+---
+
+# Skill: Odoo Cache
+
+Local file-backed cache that eliminates repeat Odoo MCP queries for low-volatility data (projects, stages, users, employees, field schemas). Other Odoo skills delegate lookups here instead of re-querying every session.
+
+---
+
+## Execution Strategy
+
+Read and write JSON files under `{ALICE_ROOT}/data/odoo_cache/`. Query Odoo MCP only on cache miss, TTL expiry, or explicit force-refresh.
+
+**MCP parameter types — always pass native JSON, never strings:**
+- `fields`: array of strings → `["id", "name"]`, not `"[\"id\", \"name\"]"`
+- `domain`: array of triplets → `[["name", "ilike", "foo"]]`, not a stringified version
+- `ids`: array of integers → `[42]`, not `"[42]"`
+
+---
+
+## Cache Location & Files
+
+All cache files live in `{ALICE_ROOT}/data/odoo_cache/` (per-device, gitignored via `data/`).
+
+| File | Contents |
+|---|---|
+| `projects.json` | `{"projects": [{"id", "name", "active"}, ...]}` — all active projects |
+| `stages.json` | `{"<project_id>": [{"id", "name", "sequence"}, ...]}` — stages per project |
+| `users.json` | `{"users": [{"id", "name", "login", "partner_id"}, ...]}` |
+| `employees.json` | `{"employees": [{"id", "name", "work_email", "user_id"}, ...]}` |
+| `fields_schemas.json` | `{"<model>": {"<field>": {"type", "required", ...}}}` |
+| `cache_manifest.json` | freshness metadata per table |
+
+If `{ALICE_ROOT}/data/odoo_cache/` does not exist, create it before first write.
+
+---
+
+## TTL Defaults
+
+| Table | TTL (seconds) | Rationale |
+|---|---|---|
+| projects | 604800 (7 days) | New projects added occasionally |
+| stages | 2592000 (30 days) | Stages defined at project setup |
+| users | 1209600 (14 days) | Onboarding cadence |
+| employees | 1209600 (14 days) | Same as users |
+| fields_schemas | 31536000 (365 days) | Changes only on Odoo instance customisation |
+
+`cache_manifest.json` shape:
+```json
+{
+  "projects":       {"last_updated": "2026-05-19T10:30:00Z", "ttl_seconds": 604800,  "source_count": 47},
+  "stages":         {"last_updated": "2026-05-19T10:30:00Z", "ttl_seconds": 2592000, "project_ids": [1, 3]},
+  "users":          {"last_updated": "2026-05-19T10:30:00Z", "ttl_seconds": 1209600, "source_count": 23},
+  "employees":      {"last_updated": "2026-05-19T10:30:00Z", "ttl_seconds": 1209600, "source_count": 23},
+  "fields_schemas": {"last_updated": "2026-05-19T10:30:00Z", "ttl_seconds": 31536000, "models": ["account.analytic.line", "project.task", "project.project"]}
+}
+```
+
+---
+
+## Lookup Escalation Ladder
+
+This is the **canonical resolution flow** for any cacheable lookup. Each step runs only if the previous one failed.
+
+**Input:** user query `q`, target table `T`.
+
+### Step 1 — Cache freshness check
+- Read `cache_manifest.json` (treat missing file as fully stale)
+- If `T.last_updated + T.ttl_seconds > now`: cache is fresh → Step 3
+- Else → Step 2
+
+### Step 2 — TTL refresh (passive)
+- Query Odoo MCP for the full table (see **Per-Table Recipes** below)
+- Atomic write the JSON, update `cache_manifest.json`
+- Continue to Step 3
+
+### Step 3 — Local fuzzy match against cache
+- Read the cached JSON, run the **Fuzzy Matcher** (below) on the records
+- **MATCH** if top score ≥ 0.85 AND (top − second) ≥ 0.15 → return the record
+- **AMBIGUOUS** if 2–3 candidates ≥ 0.4 with no clear winner → ask user to pick from top 3, return chosen
+- **NO MATCH** if no candidate ≥ 0.4 → Step 4
+
+### Step 4 — Force-refresh that table (last-resort refresh)
+- Cache may be technically fresh but missing a record added since last refresh
+- Silently force-refresh **only** table `T` (no diff report)
+- Re-run Step 3 against fresh data
+- If match found, prepend `(via force-refresh)` to the resolution message so the user knows the cache was stale
+- Else → Step 5
+
+### Step 5 — Live Odoo single-record search (final fallback)
+- Run targeted `odoo_search` with the user's raw query, e.g. `domain=[["name", "ilike", q]]`
+- If found: append the record to the cache JSON (do **NOT** touch the manifest timestamp — append is not a full refresh), return it
+- Else → Step 6
+
+### Step 6 — Declare not found
+- Tell the user: `"Could not find <table singular> matching '<q>' in cache, after refresh, or via live search. Want to (1) try a different name, (2) create a new one, or (3) skip?"`
+- Never guess an ID
+
+**Worst-case cost:** 1 full-table refresh + 1 single-record search = 2 MCP calls. Best case (fresh cache + clean fuzzy match): 0 MCP calls.
+
+---
+
+## Fuzzy Matcher (Tiered)
+
+Applies to: projects, users, employees, stages. **Not** field schemas (exact only).
+
+Run all four tiers, take `max(score_t2, score_t3, score_t4)` per candidate; if all zero, candidate has no match.
+
+**Tier 1 — Exact** (case-insensitive, trimmed)
+- If exactly one record matches: return immediately with score 1.0
+
+**Tier 2 — Substring**
+- `q.lower() in name.lower()` OR `name.lower() in q.lower()`
+- Score = `len(shorter) / len(longer)`
+
+**Tier 3 — Token overlap (Jaccard)**
+- Tokenise both: lowercase, strip punctuation, drop stopwords (`the`, `a`, `an`, `of`, `for`, `project`, `inapps`)
+- Score = `|intersection| / |union|`
+- Handles word-order swaps and abbreviations
+
+**Tier 4 — Fuzzy ratio**
+- `difflib.SequenceMatcher(None, q.lower(), name.lower()).ratio()` (stdlib, no extra deps)
+- Catches typos
+
+**Decision rule:**
+- Top score ≥ 0.85 AND (top − second) ≥ 0.15 → auto-pick
+- 2–3 candidates ≥ 0.4, gap < 0.15 → ask user with top 3:
+  ```
+  I found a few matches for "<q>":
+  1. <name1>  (score 0.92, fuzzy)
+  2. <name2>  (score 0.81, token)
+  3. <name3>  (score 0.65, substring)
+
+  Which one? Reply with the number or the exact name.
+  ```
+- Top score < 0.4 → treat as no match, escalate to Step 4
+
+Always show the **resolved full name** in the confirmation message so the user can verify.
+
+---
+
+## Per-Table Recipes
+
+### projects (`project.project`)
+
+**Full refresh query:**
+```
+odoo_search(model="project.project",
+  domain=[["active", "=", true]],
+  fields=["id", "name", "active"],
+  limit=500)
+```
+Write to `projects.json` as `{"projects": [...]}`.
+
+**Single-record fallback (Step 5):**
+```
+odoo_search(model="project.project",
+  domain=[["name", "ilike", "<q>"]],
+  fields=["id", "name", "active"],
+  limit=5)
+```
+If 1 result: append; if multiple: present with fuzzy scores and ask user.
+
+**Lookup uses fuzzy matcher.**
+
+---
+
+### stages (`project.task.type`) — keyed by project_id
+
+**Full refresh query (per project):**
+```
+odoo_search(model="project.task.type",
+  domain=[["project_ids", "in", [<project_id>]]],
+  fields=["id", "name", "sequence"],
+  limit=50)
+```
+Write under key `str(project_id)` in `stages.json`. Update `cache_manifest.json` `stages.project_ids` to include this project_id and bump `last_updated`.
+
+**Full refresh of all known projects (when "refresh odoo stages" fires):** loop over every `project_id` in `cache_manifest.json.stages.project_ids` and re-query each.
+
+**Lookup uses fuzzy matcher** scoped to that project's stage list.
+
+---
+
+### users (`res.users`)
+
+**Full refresh query:**
+```
+odoo_search(model="res.users",
+  domain=[["active", "=", true]],
+  fields=["id", "name", "login", "partner_id"],
+  limit=500)
+```
+Write to `users.json` as `{"users": [...]}`.
+
+**Lookup uses fuzzy matcher** on `name` field (also accept exact match on `login` for emails).
+
+---
+
+### employees (`hr.employee`)
+
+**Full refresh query:**
+```
+odoo_search(model="hr.employee",
+  domain=[["active", "=", true]],
+  fields=["id", "name", "work_email", "user_id"],
+  limit=500)
+```
+Write to `employees.json` as `{"employees": [...]}`.
+
+**Lookup:** if user gives an email, try exact match on `work_email` first; otherwise fuzzy on `name`.
+
+---
+
+### fields_schemas (`odoo_fields` output) — exact match only
+
+**Full refresh query (per model):**
+```
+odoo_fields(model="<model_name>", fields=[<list of field names you care about>])
+```
+Or call without `fields=` to get the entire schema (heavier but complete).
+
+Write under key `"<model_name>"` in `fields_schemas.json`.
+
+**No fuzzy match** — field names are copied from docs / introspection, exact match only. If a requested field is missing, fall through to live `odoo_fields` (Step 5).
+
+**Recommended models to seed:**
+- `account.analytic.line` (timesheet)
+- `project.task`
+- `project.project`
+
+---
+
+## Force-Refresh Mechanism
+
+Bypass TTL when the user knows the cache is stale.
+
+| Trigger phrase | Action |
+|---|---|
+| "refresh odoo cache" / "reload odoo cache" / "odoo cache is stale" | Refresh ALL tables |
+| "refresh odoo projects" | projects only |
+| "refresh odoo stages" | stages only (loop over `cache_manifest.json.stages.project_ids`) |
+| "refresh odoo users" | users only |
+| "refresh odoo employees" | employees only |
+| "refresh odoo fields" | fields_schemas only (loop over `cache_manifest.json.fields_schemas.models`) |
+
+**Per-table behaviour:**
+1. Run the **Full refresh query** from **Per-Table Recipes**
+2. Diff against current cache: new IDs, removed IDs, unchanged count
+3. Atomic write the JSON file (write to `<name>.tmp`, then rename)
+4. Update `cache_manifest.json.<table>.last_updated` to now
+5. Report one line per table:
+   ```
+   ✅ projects: 47 → 49 (+2 new: "Q3 Launch Plan", "Mobile App v2"; 0 removed)
+   ✅ employees: 23 → 23 (no change)
+   ✅ users: 26 → 25 (0 new, -1 removed: "alex@old.example.com")
+   ```
+
+**Failure handling:**
+- If Odoo MCP errors mid-refresh, leave the existing cache file untouched (atomic write means partial writes never land)
+- Report the error and which table failed; do not roll back tables that already succeeded
+
+---
+
+## Write Rules
+
+- **Atomic writes only.** Write to `<name>.tmp` then rename over `<name>` — prevents corruption if a read happens mid-write.
+- **Create directory if missing.** If `{ALICE_ROOT}/data/odoo_cache/` does not exist, create it on first write.
+- **Single-record append (Step 5) does NOT touch `cache_manifest.json` timestamps.** Only full refreshes update timestamps.
+- **Always update `cache_manifest.json` immediately after a full refresh.** Source-of-truth for freshness.
+
+---
+
+## Delegating from Other Skills
+
+Other Odoo skills should phrase their lookups as:
+
+> "Resolve project name '<q>' via alice-odoo-cache"
+> "Look up stage '<q>' in project <project_id> via alice-odoo-cache"
+> "Find employee for '{USER_EMAIL}' via alice-odoo-cache"
+> "Check fields for model 'account.analytic.line' via alice-odoo-cache"
+
+The cache skill runs the escalation ladder and returns the resolved record (or asks the user / declares not-found).
+
+---
+
+## Limitations
+
+- **Per-device cache** — files live inside this Alice install. If Alice is moved to a different directory, reinstall (`python auto-scripts/install.py`) to update the baked `{ALICE_ROOT}` path in the global skill copy.
+- **No cron refresh** — purely lazy TTL + on-demand force-refresh. If the user adds a project in Odoo and the cache is still fresh, the first lookup of that project will trigger Step 4 (silent force-refresh).
+- **No cache invalidation hooks** on Odoo writes — TTL + self-warming on miss is the trade-off.
+- **Tasks, timesheet entries, comments are NOT cached** — they are volatile by design.
+
+---
+
+## Field Reference
+
+| Cache file | Key | Fields stored |
+|---|---|---|
+| `projects.json` | `projects[]` | `id`, `name`, `active` |
+| `stages.json` | `<project_id>[]` | `id`, `name`, `sequence` |
+| `users.json` | `users[]` | `id`, `name`, `login`, `partner_id` |
+| `employees.json` | `employees[]` | `id`, `name`, `work_email`, `user_id` |
+| `fields_schemas.json` | `<model>` | full `odoo_fields` response |
+| `cache_manifest.json` | `<table>` | `last_updated` (ISO 8601 UTC), `ttl_seconds`, plus per-table metadata (`source_count`, `project_ids`, `models`) |

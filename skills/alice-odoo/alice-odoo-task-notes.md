@@ -26,7 +26,7 @@ Use this skill (not `alice-odoo-tasks.md`) when the user wants to **log prose co
 - Progress updates or handovers
 - Any content longer than a one-line status update
 
-For field changes (stage, deadline, assignee) → use `skills/alice-odoo-tasks.md` instead.
+For field changes (stage, deadline, assignee) → use `skills/alice-odoo/alice-odoo-tasks.md` instead.
 
 ---
 

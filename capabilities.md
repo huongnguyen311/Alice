@@ -41,14 +41,16 @@ This is Alice's **master routing index**. Scan this file first to identify which
 | Daily email digest | "email recap", "inbox summary", "daily digest" | `skills/alice-daily-email-recap.md` |
 | Book, cancel, or reschedule a meeting | "book a meeting", "schedule", "cancel meeting", "reschedule", "move meeting" | `skills/alice-book-meeting.md` |
 | Decide MCP vs Python script | multi-step, batch, loop, conditional, scheduled | `skills/mcp-or-script.md` |
-| Create, find, update, or change stage of Odoo tasks | "odoo task", "task in project", "create task", "add a task", "move task", "mark task", "show tasks", "find the task" | `skills/alice-odoo-tasks.md` |
-| Save structured notes or content to an Odoo task | "task notes", "save notes to task", "log to task", "add content to task", "update task description" | `skills/alice-odoo-task-notes.md` |
+| Create, find, update, or change stage of Odoo tasks | "odoo task", "task in project", "create task", "add a task", "move task", "mark task", "show tasks", "find the task" | `skills/alice-odoo/alice-odoo-tasks.md` |
+| Save structured notes or content to an Odoo task | "task notes", "save notes to task", "log to task", "add content to task", "update task description" | `skills/alice-odoo/alice-odoo-task-notes.md` |
+| Log, view, edit, or delete Odoo timesheet entries | "log hours", "log time", "timesheet", "track hours", "log work", "record time", "show my timesheet", "edit timesheet" | `skills/alice-odoo/alice-odoo-timesheet.md` |
+| Local cache for Odoo projects/stages/users/employees/fields — fuzzy match + force-refresh | "resolve project name", "look up odoo stage", "find odoo user", "find odoo employee", "refresh odoo cache", "refresh odoo projects", "odoo cache is stale" | `skills/alice-odoo/alice-odoo-cache.md` |
 | Check connectivity of Alice's services and MCP tools | "connection check", "check connection", "service status", "are services connected", "is alice connected" | `skills/alice-connection-check.md` |
 | Suggest what to eat — Vietnamese-focused meal suggestions | "what to eat", "suggest food", "ăn gì", "gợi ý món ăn", "suggest a meal", "hôm nay ăn gì" | `skills/alice-suggest-meal.md` |
 | Read, write, update, delete, search, open Google Sheets | "google sheet", "spreadsheet", "sheet", "đọc sheet", "ghi sheet", "cập nhật sheet", "thêm vào sheet", "xóa dòng", "tìm trong sheet", "mở sheet", "open sheet" | `skills/Google-Sheet/skill.md` |
-| Interactive first-time Alice setup — collect identity, write configs, copy memory templates | "setup alice", "initialize alice", "configure alice", "alice setup", "first time setup", "init alice" | `skills/alice-init.md` |
-| Install Alice skills globally | "install alice", "install alice skills", "make alice skills global" | `skills/alice-install.md` |
-| Uninstall Alice global skills | "uninstall alice", "uninstall alice skills", "remove alice skills" | `skills/alice-uninstall.md` |
+| Interactive first-time Alice setup — collect identity, write configs, copy memory templates | "setup alice", "initialize alice", "configure alice", "alice setup", "first time setup", "init alice" | `skills/alice-meta/alice-init.md` |
+| Install Alice skills globally | "install alice", "install alice skills", "make alice skills global" | `skills/alice-meta/alice-install.md` |
+| Uninstall Alice global skills | "uninstall alice", "uninstall alice skills", "remove alice skills" | `skills/alice-meta/alice-uninstall.md` |
 | Merge main into current branch for non-dev users — plain-English guidance, auto-fix safe conflicts, escalate complex ones | "sync with main", "merge main", "update from main", "sync my branch", "get latest changes" | `skills/alice-git-sync.md` |
 | Global wrapper: read/analyse CSV from any project (`/alice-read-csv`) | (same as read-csv) | `skills/alice-read-csv.md` |
 | Global wrapper: build Alice automation script from any project (`/alice-build-script`) | (same as build-script) | `skills/alice-build-script.md` |
@@ -91,6 +93,7 @@ This is Alice's **master routing index**. Scan this file first to identify which
 When Alice creates a new skill, memory file, or uses a new MCP:
 - Add a row to the relevant section above
 - Keep descriptions short — this file must stay scannable
+- Skill paths always include the `skills/` prefix — `skills/alice-foo.md` (flat) or `skills/alice-bar/alice-bar-baz.md` (grouped). Grouping is allowed for clusters of ≥3 related skills; see the "Naming convention" sub-block in `CLAUDE.md` for the full rule (group directories must use the `alice-` prefix).
 
 ---
-*Last updated: 2026-04-16 (Google Sheets CRUD skill added; alice-init and alice-git-sync skills added)*
+*Last updated: 2026-05-19 (alice-odoo-cache skill added — local cache layer with fuzzy match + force-refresh for Odoo projects/stages/users/employees/field schemas)*

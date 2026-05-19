@@ -1,10 +1,11 @@
 {
   "_readme": "Copy this file to install-config.json and edit to your needs. install-config.json is gitignored.",
   "_naming": "All global skills use the alice- prefix to avoid shadowing same-named skills in other projects.",
+  "_grouping": "The \"file\" field is a path relative to skills/ — flat (\"alice-foo.md\") or grouped (\"alice-odoo/alice-foo.md\"). Group directories must also use the alice- prefix to avoid cross-project collision. install.py flattens destinations to ~/.claude/skills/<name>/SKILL.md regardless of source layout.",
   "skills": [
     {
       "name": "alice-odoo-tasks",
-      "file": "alice-odoo-tasks.md",
+      "file": "alice-odoo/alice-odoo-tasks.md",
       "type": "mcp",
       "mcp_required": "odoo",
       "warning": null,
@@ -12,10 +13,26 @@
     },
     {
       "name": "alice-odoo-task-notes",
-      "file": "alice-odoo-task-notes.md",
+      "file": "alice-odoo/alice-odoo-task-notes.md",
       "type": "mcp",
       "mcp_required": "odoo",
       "warning": null,
+      "enabled": true
+    },
+    {
+      "name": "alice-odoo-timesheet",
+      "file": "alice-odoo/alice-odoo-timesheet.md",
+      "type": "mcp",
+      "mcp_required": "odoo",
+      "warning": null,
+      "enabled": true
+    },
+    {
+      "name": "alice-odoo-cache",
+      "file": "alice-odoo/alice-odoo-cache.md",
+      "type": "mcp",
+      "mcp_required": "odoo",
+      "warning": "Uses {ALICE_ROOT} — installed as a token-substituted copy. Cache data lives in this Alice install's data/odoo_cache/ (per-device). Reinstall if Alice is moved.",
       "enabled": true
     },
     {
@@ -77,7 +94,7 @@
     },
     {
       "name": "alice-uninstall",
-      "file": "alice-uninstall.md",
+      "file": "alice-meta/alice-uninstall.md",
       "type": "python",
       "mcp_required": null,
       "warning": null,
@@ -85,7 +102,7 @@
     },
     {
       "name": "alice-install",
-      "file": "alice-install.md",
+      "file": "alice-meta/alice-install.md",
       "type": "python",
       "mcp_required": null,
       "warning": null,

@@ -52,20 +52,22 @@ Known trigger patterns (from skill frontmatter):
 
 | Skill | Scope | Key triggers |
 |---|---|---|
-| `save-memory.md` | memory | "remember", "save this", "I prefer", "from now on", "note that", "next time" |
-| `build-script.md` | automation | "write a script", "automate", "python script", "build a script" |
-| `run-automation.md` | automation | "run", "schedule", "cron", "recurring", "every day", "every week" |
-| `read-csv.md` | data | "csv", "analyse", "data file", "filter", "spreadsheet", "report on" |
-| `alice-daily-email-recap.md` | email | "email recap", "inbox summary", "daily digest", "unread emails" |
-| `alice-odoo-tasks.md` | odoo | "create a task", "add a task", "new task in", "odoo task", "task in the project", "update the task", "move task to", "mark task as", "show tasks", "find the task", "change task status" |
-| `alice-odoo-task-notes.md` | odoo | "save notes to task", "add notes to the task", "log this to the task", "task notes", "update task description", "add content to task" |
-| `alice-connection-check.md` | core | "connection check", "check connection", "check connections", "service status", "are services connected", "is alice connected", "check integrations", "verify connections", "ping services" |
-| `alice-suggest-meal.md` | personal | "what should I eat", "suggest food", "what to eat", "ăn gì", "gợi ý món ăn", "hôm nay ăn gì", "đề xuất bữa ăn", "suggest a meal" |
+| `skills/save-memory.md` | memory | "remember", "save this", "I prefer", "from now on", "note that", "next time" |
+| `skills/build-script.md` | automation | "write a script", "automate", "python script", "build a script" |
+| `skills/run-automation.md` | automation | "run", "schedule", "cron", "recurring", "every day", "every week" |
+| `skills/read-csv.md` | data | "csv", "analyse", "data file", "filter", "spreadsheet", "report on" |
+| `skills/alice-daily-email-recap.md` | email | "email recap", "inbox summary", "daily digest", "unread emails" |
+| `skills/alice-odoo/alice-odoo-tasks.md` | odoo | "create a task", "add a task", "new task in", "odoo task", "task in the project", "update the task", "move task to", "mark task as", "show tasks", "find the task", "change task status" |
+| `skills/alice-odoo/alice-odoo-task-notes.md` | odoo | "save notes to task", "add notes to the task", "log this to the task", "task notes", "update task description", "add content to task" |
+| `skills/alice-odoo/alice-odoo-timesheet.md` | odoo | "log hours", "log time", "log work", "timesheet", "add timesheet", "record hours", "track hours", "show my timesheet", "edit timesheet", "delete timesheet entry" |
+| `skills/alice-odoo/alice-odoo-cache.md` | odoo | "resolve project name", "look up odoo stage", "find odoo user", "find odoo employee", "odoo field schema", "refresh odoo cache", "reload odoo cache", "refresh odoo projects", "refresh odoo stages", "refresh odoo users", "refresh odoo employees", "refresh odoo fields", "odoo cache is stale" |
+| `skills/alice-connection-check.md` | core | "connection check", "check connection", "check connections", "service status", "are services connected", "is alice connected", "check integrations", "verify connections", "ping services" |
+| `skills/alice-suggest-meal.md` | personal | "what should I eat", "suggest food", "what to eat", "ăn gì", "gợi ý món ăn", "hôm nay ăn gì", "đề xuất bữa ăn", "suggest a meal" |
 | `skills/Google-Sheet/skill.md` | data | "google sheet", "google sheets", "spreadsheet", "sheet", "đọc sheet", "ghi sheet", "cập nhật sheet", "thêm vào sheet", "xóa dòng", "tìm trong sheet", "mở sheet", "open sheet", "mở google sheet", "tạo sheet mới", "xóa sheet tab" |
-| `alice-init.md` | meta | "setup alice", "initialize alice", "alice setup", "configure alice", "first time setup", "init alice", "run setup" |
-| `alice-git-sync.md` | automation | "sync with main", "merge main", "update from main", "pull from main", "sync my branch", "get latest changes", "bring in changes from main", "I'm behind main", "update my branch" |
+| `skills/alice-meta/alice-init.md` | meta | "setup alice", "initialize alice", "alice setup", "configure alice", "first time setup", "init alice", "run setup" |
+| `skills/alice-git-sync.md` | automation | "sync with main", "merge main", "update from main", "pull from main", "sync my branch", "get latest changes", "bring in changes from main", "I'm behind main", "update my branch" |
 
-> Update this table whenever a new skill is added with `triggers:` frontmatter.
+> Update this table whenever a new skill is added with `triggers:` frontmatter. Skill paths always include the `skills/` prefix — flat (`skills/alice-foo.md`) or grouped (`skills/alice-bar/alice-bar-baz.md`). See `CLAUDE.md` "Naming convention" for grouping rules.
 
 ---
 

@@ -4,20 +4,32 @@ Install Alice skills as personal global Claude Code skills at ~/.claude/skills/.
 
 Config: auto-scripts/install-config.json (gitignored, copy from install-config.json.example)
 
-Skill types:
-  mcp    — pure MCP skill, installed as symlink (or copy on Windows)
-  python — skill uses {ALICE_ROOT} tokens; install substitutes the resolved
-            absolute path and writes a copy so it works from any project CWD
+Install behaviour:
+  - Every skill is installed as a copy (not a symlink) so each installed
+    SKILL.md carries Alice marker keys in its frontmatter.
+  - {ALICE_ROOT} and personal tokens are substituted at install time —
+    the installed copy contains the resolved absolute paths and identity.
+  - After token substitution, three marker lines are injected into the
+    frontmatter of every installed SKILL.md:
+        x-alice-managed: true
+        x-alice-source: <this Alice repo's absolute path>
+        x-alice-installed-at: <ISO 8601 timestamp>
+    These keys are ignored by Claude Code's skill loader but allow tooling
+    (and humans) to identify and clean up Alice-managed installs.
+  - Editing a source skill no longer reflects immediately in ~/.claude/skills/
+    — re-run install.py to update.
 
-Both types use the same source skill file — no duplicate sections, no fences.
-The only difference is that python skills get {ALICE_ROOT} substituted at
-install time and are stored as copies (not symlinks) so the resolved paths
-are baked into the installed file.
+Cleanup:
+  Pass 1 (manifest-based): removes dirs that were in the previous manifest
+    but are no longer in the current config.
+  Pass 2 (marker-based):   scans ~/.claude/skills/ for dirs whose SKILL.md
+    has x-alice-managed=true AND x-alice-source matching this Alice install,
+    but whose name is no longer in the current config. Catches orphans that
+    survived a missing/stale manifest.
 
 Cross-platform:
   - pathlib for all paths — no hardcoded usernames or directories
-  - mcp: Mac/Linux symlinks; Windows falls back to copy
-  - python: always a copy (symlink would leave {ALICE_ROOT} unresolved)
+  - copy-only install path works identically on Mac, Linux, and Windows
 
 Run directly: python auto-scripts/install.py
 Or via Alice: say "install alice skills"
@@ -86,6 +98,108 @@ def _skills_from_config(config: dict) -> list[dict]:
         s for s in config.get("skills", [])
         if not s.get("name", "").startswith("_") and s.get("enabled", True)
     ]
+
+
+def _load_previous_manifest() -> list[dict]:
+    """Return the skills list from the previous manifest, or [] if none exists."""
+    if not MANIFEST_PATH.exists():
+        return []
+    try:
+        with open(MANIFEST_PATH, encoding="utf-8") as f:
+            return json.load(f).get("skills", [])
+    except (json.JSONDecodeError, OSError):
+        return []
+
+
+def _safely_remove_skill_dir(name: str, skill_dir: Path) -> dict:
+    """
+    Remove a single ~/.claude/skills/<name>/ dir with strict safety:
+      - Skip if dir doesn't exist (ALREADY_GONE)
+      - Skip if dir is outside CLAUDE_SKILLS (defends against tampered input)
+      - Skip if dir contains anything other than SKILL.md (preserves manual files)
+    Returns a result dict suitable for joining into the caller's results list.
+    """
+    if not skill_dir.exists():
+        return {"name": name, "status": "ALREADY_GONE"}
+
+    try:
+        skill_dir.resolve().relative_to(CLAUDE_SKILLS.resolve())
+    except ValueError:
+        return {"name": name, "status": "SKIPPED",
+                "reason": f"dir outside {CLAUDE_SKILLS}: {skill_dir}"}
+
+    entries = list(skill_dir.iterdir())
+    unexpected = [p.name for p in entries if p.name != "SKILL.md"]
+    if unexpected:
+        return {"name": name, "status": "SKIPPED",
+                "reason": f"contains unexpected files: {', '.join(unexpected)}"}
+
+    try:
+        skill_md = skill_dir / "SKILL.md"
+        if skill_md.exists() or skill_md.is_symlink():
+            skill_md.unlink()
+        skill_dir.rmdir()
+        return {"name": name, "status": "PRUNED", "dir": str(skill_dir)}
+    except OSError as e:
+        return {"name": name, "status": "ERROR", "reason": str(e)}
+
+
+def _prune_orphans(previous: list[dict], current_names: set[str]) -> list[dict]:
+    """
+    Pass 1 — manifest-based prune.
+    Remove ~/.claude/skills/<name>/ for skills in the previous manifest but no
+    longer in the current config (deleted entries or enabled:false flips).
+    """
+    results = []
+    for entry in previous:
+        name = entry.get("name")
+        if not name or name in current_names:
+            continue
+        skill_dir = Path(entry.get("dir") or (CLAUDE_SKILLS / name))
+        results.append(_safely_remove_skill_dir(name, skill_dir))
+    return results
+
+
+def _prune_unmarked_orphans(current_names: set[str], alice_root: Path) -> list[dict]:
+    """
+    Pass 2 — marker-based filesystem scan.
+    Walk ~/.claude/skills/ and prune dirs whose SKILL.md has x-alice-managed=true
+    AND x-alice-source matches this alice_root, but whose name is no longer in
+    the current config.
+
+    Catches orphans that survived a missing/stale manifest. Will NOT touch:
+      - dirs without the marker (could be anything)
+      - dirs marked by a different Alice install (different x-alice-source)
+      - dirs whose name is still in the current config
+      - dirs containing files other than SKILL.md (manual content)
+    """
+    if not CLAUDE_SKILLS.exists():
+        return []
+
+    alice_root_str = str(alice_root)
+    results = []
+    seen_names = set()
+    for child in CLAUDE_SKILLS.iterdir():
+        if not child.is_dir():
+            continue
+        skill_md = child / "SKILL.md"
+        if not skill_md.exists():
+            continue
+
+        marker = _read_skill_marker(skill_md)
+        if not marker:
+            continue
+        if marker.get("x-alice-source") != alice_root_str:
+            continue
+        marker_name = marker.get("name") or child.name
+        if marker_name in current_names:
+            continue
+        if marker_name in seen_names:
+            continue  # belt and braces — never report the same name twice
+        seen_names.add(marker_name)
+
+        results.append(_safely_remove_skill_dir(marker_name, child))
+    return results
 
 
 def _load_personal() -> dict:
@@ -166,10 +280,101 @@ def _apply_tokens(content: str, skill_name: str, personal: dict) -> str:
     return content
 
 
-def _install_skill(skill: dict, personal: dict) -> dict:
-    """Install one skill. Returns a result dict with status, method, and type."""
+ALICE_MARKER_KEYS = ("x-alice-managed", "x-alice-source", "x-alice-installed-at")
+
+
+def _inject_alice_markers(content: str, alice_root: Path, installed_at: str) -> str:
+    """
+    Add x-alice-managed / x-alice-source / x-alice-installed-at to the
+    installed SKILL.md's frontmatter, right before the closing `---`.
+
+    If the source somehow already contained any of these keys, the existing
+    lines are stripped first so the install-time values always win.
+    """
+    if not content.startswith("---\n"):
+        # No frontmatter — prepend a minimal one with just the markers.
+        marker_block = "---\n" + _marker_lines(alice_root, installed_at) + "---\n"
+        return marker_block + content
+
+    end_idx = content.find("\n---", 4)
+    if end_idx == -1:
+        # Malformed frontmatter — give up and return content unchanged rather
+        # than corrupt the file.
+        return content
+
+    head = content[: end_idx + 1]   # includes everything up to (and incl.) the \n before closing ---
+    tail = content[end_idx + 1 :]   # starts with '---' line and continues with body
+
+    # Strip any pre-existing marker lines from the frontmatter
+    head_lines = head.splitlines(keepends=True)
+    head_lines = [
+        line for line in head_lines
+        if not any(line.lstrip().startswith(f"{k}:") for k in ALICE_MARKER_KEYS)
+    ]
+    head = "".join(head_lines)
+    if not head.endswith("\n"):
+        head += "\n"
+
+    return head + _marker_lines(alice_root, installed_at) + tail
+
+
+def _marker_lines(alice_root: Path, installed_at: str) -> str:
+    """Return the three marker lines (trailing newline included) as a single string."""
+    return (
+        f"x-alice-managed: true\n"
+        f"x-alice-source: {alice_root}\n"
+        f"x-alice-installed-at: {installed_at}\n"
+    )
+
+
+def _read_skill_marker(skill_md_path: Path) -> dict | None:
+    """
+    Read the frontmatter of an installed SKILL.md and extract Alice marker
+    info plus the skill name. Returns None if the file doesn't exist, has
+    no frontmatter, or is missing the x-alice-managed marker.
+
+    Returned dict shape: {"name": str, "x-alice-source": str, "x-alice-managed": bool}
+    """
+    try:
+        content = skill_md_path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        return None
+
+    if not content.startswith("---\n"):
+        return None
+    end_idx = content.find("\n---", 4)
+    if end_idx == -1:
+        return None
+
+    frontmatter = content[4 : end_idx + 1]
+    result = {}
+    for line in frontmatter.splitlines():
+        stripped = line.strip()
+        if ":" not in stripped:
+            continue
+        key, _, value = stripped.partition(":")
+        key = key.strip()
+        value = value.strip()
+        if key == "name":
+            result["name"] = value
+        elif key == "x-alice-managed":
+            result["x-alice-managed"] = value.lower() == "true"
+        elif key == "x-alice-source":
+            result["x-alice-source"] = value
+
+    if not result.get("x-alice-managed"):
+        return None
+    return result
+
+
+def _install_skill(skill: dict, personal: dict, installed_at: str) -> dict:
+    """Install one skill as a copy with Alice markers baked into the frontmatter.
+
+    All installs are copies (no symlinks) so every installed SKILL.md carries
+    the x-alice-* markers — making the install identifiable and orphan-detectable
+    regardless of manifest state.
+    """
     name = skill["name"]
-    skill_type = skill.get("type", "mcp")
     source_orig = ALICE_ROOT / "skills" / skill["file"]
     skill_dir = CLAUDE_SKILLS / name
     dest = skill_dir / "SKILL.md"
@@ -177,59 +382,27 @@ def _install_skill(skill: dict, personal: dict) -> dict:
     if not source_orig.exists():
         return {"status": "ERROR", "reason": f"Source file not found: {source_orig}"}
 
-    # Determine if this skill needs token substitution (personal data or ALICE_ROOT)
     raw = source_orig.read_text(encoding="utf-8")
-    USER_TOKENS = ("USER_NAME", "USER_EMAIL", "USER_TIMEZONE", "USER_ROLE", "USER_ORG", "USER_LOCATION", "USER_LANGUAGE")
-    SKILL_TOKENS = ("CONTACTS", "TIMEZONE", "MEETING_DURATION_HOURS", "ADD_GOOGLE_MEET_FOR_EXTERNAL")
-    needs_substitution = (
-        "{ALICE_ROOT}" in raw
-        or any(f"{{{t}}}" in raw for t in USER_TOKENS + SKILL_TOKENS)
-    )
 
-    # Skills with tokens must be installed as copies (tokens baked in at install time).
-    # Pure MCP skills with no tokens can be symlinked.
-    install_as_copy = (skill_type == "python") or needs_substitution
-
-    # Idempotency checks
-    if install_as_copy:
-        # Always re-generate copies to pick up config changes
-        if dest.exists() or dest.is_symlink():
-            dest.unlink()
-    else:
-        # Symlink: check if already correctly linked
-        if dest.is_symlink():
-            if dest.resolve() == source_orig.resolve():
-                return {"status": "ALREADY_INSTALLED", "method": "symlink", "dest": str(dest)}
-            dest.unlink()  # wrong target — re-link
-        elif dest.exists():
-            return {
-                "status": "SKIPPED",
-                "reason": "SKILL.md exists as a real file (not a symlink) — remove manually to reinstall",
-            }
+    # Remove any prior install (copy or symlink) — we always re-generate
+    if dest.exists() or dest.is_symlink():
+        dest.unlink()
 
     skill_dir.mkdir(parents=True, exist_ok=True)
 
-    if install_as_copy:
-        # Apply all token substitutions ({ALICE_ROOT} + personal tokens), write as copy
-        resolved = _apply_tokens(raw, name, personal)
-        dest.write_text(resolved, encoding="utf-8")
-        method = "copy"
-    else:
-        # No tokens — symlink preferred, copy fallback (Windows without Dev Mode)
-        method = "symlink"
-        try:
-            dest.symlink_to(source_orig)
-        except (OSError, NotImplementedError):
-            shutil.copy2(source_orig, dest)
-            method = "copy"
+    # Apply token substitutions then inject Alice marker keys before the
+    # closing --- of the frontmatter.
+    resolved = _apply_tokens(raw, name, personal)
+    resolved = _inject_alice_markers(resolved, ALICE_ROOT, installed_at)
+    dest.write_text(resolved, encoding="utf-8")
 
     if not dest.exists():
         return {
             "status": "ERROR",
-            "reason": "File does not exist after install (broken symlink or copy failed)",
+            "reason": "File does not exist after install (write failed)",
         }
 
-    return {"status": "OK", "method": method, "dest": str(dest)}
+    return {"status": "OK", "method": "copy", "dest": str(dest)}
 
 
 
@@ -276,6 +449,7 @@ def main():
     config = _load_config()
     skills = _skills_from_config(config)
     personal = _load_personal()
+    previous_manifest_skills = _load_previous_manifest()
 
     print(f"Alice install — target: {CLAUDE_SKILLS}")
     print(f"Config:        {CONFIG_PATH if CONFIG_PATH.exists() else CONFIG_EXAMPLE_PATH}")
@@ -288,7 +462,7 @@ def main():
     manifest_skills = []
 
     for skill in skills:
-        result = _install_skill(skill, personal)
+        result = _install_skill(skill, personal, now)
         status = result["status"]
 
         display_status = "WARN" if (skill.get("warning") and status in ("OK", "ALREADY_INSTALLED")) else status
@@ -317,6 +491,35 @@ def main():
             "warning": skill.get("warning"),
             "installed_at": now,
         })
+
+    current_names = {s["name"] for s in skills}
+    prune_results = _prune_orphans(previous_manifest_skills, current_names)
+    if prune_results:
+        print("\nPruning orphans (removed/disabled in config) —")
+        for r in prune_results:
+            label = f"[{r['status']}]".ljust(18)
+            print(f"  {label} {r['name']}", end="")
+            if r.get("reason"):
+                print(f"  — {r['reason']}", end="")
+            print()
+
+    # Pass 2 — marker-based scan catches orphans not in the manifest (stale or
+    # deleted manifest, previous interrupted run, etc.) but only those marked
+    # as installed by THIS Alice install.
+    pruned_pass1_names = {r["name"] for r in prune_results if r.get("status") == "PRUNED"}
+    orphan_results = _prune_unmarked_orphans(current_names, ALICE_ROOT)
+    # Hide entries already reported by Pass 1 — Pass 2 will also see them mid-flight
+    # if the directory hasn't been removed yet on disk (it has been, but defend anyway).
+    orphan_results = [r for r in orphan_results if r["name"] not in pruned_pass1_names]
+    if orphan_results:
+        print("\nScanning for untracked Alice-installed orphans —")
+        for r in orphan_results:
+            label = "[ORPHAN-PRUNED]" if r["status"] == "PRUNED" else f"[{r['status']}]"
+            label = label.ljust(18)
+            print(f"  {label} {r['name']}", end="")
+            if r.get("reason"):
+                print(f"  — {r['reason']}", end="")
+            print()
 
     manifest = {
         "installed_at": now,

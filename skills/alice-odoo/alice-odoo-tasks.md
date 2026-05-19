@@ -39,7 +39,7 @@ Use `odoo_search`, `odoo_create`, `odoo_write`, `odoo_get` directly. The Odoo MC
 
 Use this skill when the user wants to **act on a task** in Odoo: create, find, update fields, or move to a different stage.
 
-For logging notes, meeting summaries, or structured content to a task → use `skills/alice-odoo-task-notes.md` instead.
+For logging notes, meeting summaries, or structured content to a task → use `skills/alice-odoo/alice-odoo-task-notes.md` instead.
 
 ---
 
@@ -62,88 +62,20 @@ Ask **all** missing required fields in **one message** — never one at a time.
 
 ## Self-Assignment
 
-If the user says "assign to me", "assign it to myself", or similar, resolve the user's Odoo account using known identity — no need to ask:
+If the user says "assign to me", "assign it to myself", or similar, resolve the user's Odoo account via the cache:
 
-1. Search by name first:
-   ```
-   odoo_search(model="res.users", domain=[["name", "ilike", "{USER_NAME}"]], fields=["id", "name"])
-   ```
-2. Fallback by email if no name match:
-   ```
-   odoo_search(model="res.users", domain=[["login", "=", "{USER_EMAIL}"]], fields=["id", "name"])
-   ```
-3. Use the first match. If neither returns a result, ask: "What's your Odoo username?"
+- Find user matching `{USER_NAME}` (or `{USER_EMAIL}` as a fallback) via `skills/alice-odoo/alice-odoo-cache.md` (`users` table)
+- If the cache returns no match after the full escalation ladder, ask: "What's your Odoo username?"
 
 ---
 
 ## Resolve Project Name
 
-Use this algorithm every time a project name is needed. Ask the user **at most once**.
+**Delegate to `skills/alice-odoo/alice-odoo-cache.md`.** Ask the cache skill to resolve project `<q>` via the **Lookup Escalation Ladder** (cache → fuzzy match → silent force-refresh on miss → live `odoo_search` → ask user). The cache handles fuzzy matching (typos, word swaps, abbreviations) and disambiguation locally.
 
-**Session cache rule:** If a project was already resolved this conversation, reuse `(id, name)` — do not re-query.
+**Within a single conversation:** once a project is resolved, reuse `(id, name)` — do not re-invoke the cache. The cache layer covers cross-session persistence; the in-conversation reuse rule covers redundant calls within a turn.
 
-**Step 1 — Normalize**
-Lowercase, strip punctuation, split into tokens.
-- `"inapps website"` → `["inapps", "website"]`
-- `"HR"` → `["hr"]`
-
-**Step 2 — AND search** (all tokens must appear in name)
-```
-odoo_search(model="project.project",
-  domain=[["name", "ilike", "<token1>"], ["name", "ilike", "<token2>"], ...],
-  fields=["id", "name"], limit=10)
-```
-- 1 result → **resolved**
-- 2–5 results → go to Step 5
-- >5 results → go to Step 6
-- 0 results → go to Step 3
-
-**Step 3 — OR search** (any token matches)
-
-Build OR domain with Odoo prefix `"|"` operator — use N-1 `"|"` for N conditions:
-```
-# 2 tokens:
-odoo_search(model="project.project",
-  domain=["|", ["name", "ilike", "<token1>"], ["name", "ilike", "<token2>"]],
-  fields=["id", "name"], limit=10)
-
-# 3 tokens:
-domain=["|", "|", ["name", "ilike", "<t1>"], ["name", "ilike", "<t2>"], ["name", "ilike", "<t3>"]]
-```
-- 1 result → **resolved**
-- 2–5 results → go to Step 5
-- >5 results → go to Step 6
-- 0 results → go to Step 4
-
-**Step 4 — Full list fallback**
-```
-odoo_search(model="project.project",
-  domain=[["active", "=", true]],
-  fields=["id", "name"], limit=50)
-```
-In your own reasoning (no extra Odoo call), keep entries where any token is a substring of the name (case-insensitive).
-- 0 matches → show all project names, ask user to identify theirs
-- 1 match → **resolved**
-- 2–5 → go to Step 5
-- >5 → go to Step 6
-
-**Step 5 — Disambiguation** (ask once, numbered list)
-```
-I found a few projects matching "[input]":
-1. inapps.net Website Redesign 2025
-2. inapps Internal Portal
-
-Which one? Reply with the number or the exact name.
-```
-Cache the chosen `(id, name)` for the rest of the session.
-
-**Step 6 — Too many results**
-```
-I found [N] projects matching "[input]". Could you add a few more words from the project name?
-```
-Re-run from Step 1 with the refined input.
-
-**After resolution — always show the full Odoo project name in confirmations** so the user can verify the match.
+**After resolution — always show the full Odoo project name in confirmations** so the user can verify the match. If the cache had to force-refresh to find the project, surface that as `(via force-refresh)` in the confirmation.
 
 ---
 
@@ -151,10 +83,7 @@ Re-run from Step 1 with the refined input.
 
 1. Validate required fields (task title + project name). Ask if missing.
 2. Resolve project using the **Resolve Project Name** algorithm above to get `project_id`.
-3. If assignee given, resolve user ID:
-   ```
-   odoo_search(model="res.users", domain=[("name", "ilike", "<assignee name>")], fields=["id", "name"])
-   ```
+3. If assignee given, resolve user ID via `skills/alice-odoo/alice-odoo-cache.md` (`users` table — fuzzy match on name, exact match on email).
 4. Create the task:
    ```
    odoo_create(model="project.task", values={
@@ -206,22 +135,15 @@ odoo_write(model="project.task", ids=[<task_id>], values={
 
 ## Change Task Stage
 
-Stages are **project-specific** in Odoo — always discover before writing.
+Stages are **project-specific** in Odoo — always resolve via cache before writing.
 
-1. Resolve `project_id` using the **Resolve Project Name** algorithm.
-2. Discover available stages for the project:
-   ```
-   odoo_search(model="project.task.type", domain=[("project_ids", "in", [<project_id>])], fields=["id", "name"])
-   ```
-3. Present list if user intent is ambiguous: "Available stages: New, In Progress, Done, Cancelled"
-4. Fuzzy-match user's word to stage name (case-insensitive, partial match):
-   - "done" → "Done", "in progress" / "inprogress" / "wip" → "In Progress", "todo" / "new" → "New"
-5. If still ambiguous, ask once: "Did you mean [Stage A] or [Stage B]?"
-6. Write the stage:
+1. Resolve `project_id` using the **Resolve Project Name** section (cache-delegated).
+2. Resolve the target stage via `skills/alice-odoo/alice-odoo-cache.md` (`stages` table, scoped to `<project_id>`). The cache handles fuzzy matching like `"wip"` → `"In Progress"` and disambiguation locally.
+3. Write the stage:
    ```
    odoo_write(model="project.task", ids=[<task_id>], values={"stage_id": <matched_stage_id>})
    ```
-7. Confirm: "Task '[name]' moved to [Stage Name]."
+4. Confirm: "Task '[name]' moved to [Stage Name]."
 
 ---
 

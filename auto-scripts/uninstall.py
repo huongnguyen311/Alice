@@ -2,9 +2,14 @@
 """
 Uninstall Alice skills from ~/.claude/skills/.
 
-Reads data/install-manifest.json to know exactly what to remove.
-Only removes symlinks or copies that Alice installed — never touches real files
-not recorded in the manifest.
+Primary path: reads data/install-manifest.json to know exactly what to remove.
+Only removes files that Alice installed — never touches real files not recorded
+in the manifest.
+
+Fallback path: if the manifest is missing, scans ~/.claude/skills/ for SKILL.md
+files with x-alice-managed=true AND x-alice-source matching THIS Alice install
+(baked into the marker at install time). Catches the case where the manifest
+was deleted but the installs are still on disk.
 
 Run directly: python auto-scripts/uninstall.py
 Or via Alice: say "uninstall alice skills"
@@ -17,6 +22,7 @@ import sys
 from pathlib import Path
 
 ALICE_ROOT = Path(__file__).parent.parent.resolve()
+CLAUDE_SKILLS = Path.home() / ".claude" / "skills"
 
 
 def ensure_venv() -> None:
@@ -30,6 +36,74 @@ def ensure_venv() -> None:
         os.execv(str(venv_python), [str(venv_python)] + sys.argv)
 MANIFEST_PATH = ALICE_ROOT / "data" / "install-manifest.json"
 GLOBAL_CLAUDE_JSON = Path.home() / ".claude.json"
+
+
+def _read_skill_marker(skill_md_path: Path) -> dict | None:
+    """
+    Read the frontmatter of an installed SKILL.md and extract Alice marker info.
+    Returns None if the file is missing, has no frontmatter, or is unmarked.
+    Mirrors the parser in install.py — duplicated here so uninstall.py stays
+    standalone (no shared module).
+    """
+    try:
+        content = skill_md_path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        return None
+    if not content.startswith("---\n"):
+        return None
+    end_idx = content.find("\n---", 4)
+    if end_idx == -1:
+        return None
+
+    frontmatter = content[4 : end_idx + 1]
+    result = {}
+    for line in frontmatter.splitlines():
+        stripped = line.strip()
+        if ":" not in stripped:
+            continue
+        key, _, value = stripped.partition(":")
+        key = key.strip()
+        value = value.strip()
+        if key == "name":
+            result["name"] = value
+        elif key == "x-alice-managed":
+            result["x-alice-managed"] = value.lower() == "true"
+        elif key == "x-alice-source":
+            result["x-alice-source"] = value
+
+    if not result.get("x-alice-managed"):
+        return None
+    return result
+
+
+def _discover_marked_skills() -> list[dict]:
+    """
+    Scan ~/.claude/skills/ for skill directories whose SKILL.md has
+    x-alice-managed=true AND x-alice-source matching THIS Alice install.
+    Returns a list of {name, link, dir} dicts shaped like manifest entries.
+    """
+    if not CLAUDE_SKILLS.exists():
+        return []
+    alice_root_str = str(ALICE_ROOT)
+    found = []
+    for child in CLAUDE_SKILLS.iterdir():
+        if not child.is_dir():
+            continue
+        skill_md = child / "SKILL.md"
+        if not skill_md.exists():
+            continue
+        marker = _read_skill_marker(skill_md)
+        if not marker:
+            continue
+        if marker.get("x-alice-source") != alice_root_str:
+            continue
+        found.append({
+            "name": marker.get("name") or child.name,
+            "link": str(skill_md),
+            "dir": str(child),
+            "method": "copy",  # all marker-bearing installs are copies post-v2
+        })
+    return found
 
 
 def remove_global_mcps() -> None:
@@ -82,26 +156,30 @@ def remove_global_mcps() -> None:
 
 def main():
     ensure_venv()
-    if not MANIFEST_PATH.exists():
+
+    manifest_missing = not MANIFEST_PATH.exists()
+    if manifest_missing:
         print("No install manifest found at data/install-manifest.json.")
-        print("Nothing to uninstall. If you installed skills manually, remove them from ~/.claude/skills/ by hand.")
-        sys.exit(0)
-
-    with open(MANIFEST_PATH, encoding="utf-8") as f:
-        try:
-            manifest = json.load(f)
-        except json.JSONDecodeError as e:
-            print(f"Manifest is corrupt: {e}")
-            print(f"Inspect manually: {MANIFEST_PATH}")
-            sys.exit(1)
-
-    skills = manifest.get("skills", [])
-    if not skills:
-        print("Manifest contains no skills. Deleting empty manifest.")
-        MANIFEST_PATH.unlink()
-        sys.exit(0)
-
-    print(f"Alice uninstall — removing {len(skills)} skill(s) from {manifest.get('skills_dir', '~/.claude/skills')}\n")
+        print(f"Falling back to marker scan of {CLAUDE_SKILLS}/ ...")
+        skills = _discover_marked_skills()
+        if not skills:
+            print("No Alice-marked skills found on disk. Nothing to uninstall.")
+            sys.exit(0)
+        print(f"Found {len(skills)} marked skill(s) belonging to this Alice install ({ALICE_ROOT}).\n")
+    else:
+        with open(MANIFEST_PATH, encoding="utf-8") as f:
+            try:
+                manifest = json.load(f)
+            except json.JSONDecodeError as e:
+                print(f"Manifest is corrupt: {e}")
+                print(f"Inspect manually: {MANIFEST_PATH}")
+                sys.exit(1)
+        skills = manifest.get("skills", [])
+        if not skills:
+            print("Manifest contains no skills. Deleting empty manifest.")
+            MANIFEST_PATH.unlink()
+            sys.exit(0)
+        print(f"Alice uninstall — removing {len(skills)} skill(s) from {manifest.get('skills_dir', '~/.claude/skills')}\n")
 
     for skill in skills:
         name = skill["name"]
@@ -142,9 +220,12 @@ def main():
     print("\nGlobal MCP cleanup —")
     remove_global_mcps()
 
-    # Delete the manifest
-    MANIFEST_PATH.unlink()
-    print(f"\nManifest deleted: {MANIFEST_PATH}")
+    # Delete the manifest (only if it existed at the start of this run)
+    if MANIFEST_PATH.exists():
+        MANIFEST_PATH.unlink()
+        print(f"\nManifest deleted: {MANIFEST_PATH}")
+    elif manifest_missing:
+        print(f"\n(No manifest existed; uninstall driven by marker scan.)")
     print("Alice's skill source files in skills/ are untouched.")
 
 
