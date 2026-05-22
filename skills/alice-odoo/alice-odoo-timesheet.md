@@ -66,7 +66,7 @@ Ask **all** missing required fields in **one message** — never one at a time.
 
 ## Field Discovery
 
-Some Odoo installs customize the timesheet model. **Delegate to `skills/alice-odoo/alice-odoo-cache.md`** (`fields_schemas` table, model `account.analytic.line`) — the cache persists the schema across sessions so this only runs against Odoo once per instance.
+Some Odoo installs customize the timesheet model. **Delegate to the alice-odoo-cache skill** (`fields_schemas` table, model `account.analytic.line`) — the cache persists the schema across sessions so this only runs against Odoo once per instance.
 
 Verify these fields are present: `name`, `date`, `unit_amount`, `project_id`, `task_id`, `employee_id`, `user_id`. If any are missing or renamed, ask the user before proceeding.
 
@@ -76,7 +76,9 @@ Verify these fields are present: `name`, `date`, `unit_amount`, `project_id`, `t
 
 Timesheet entries belong to an `hr.employee`, not directly to `res.users`.
 
-**Delegate to `skills/alice-odoo/alice-odoo-cache.md`** (`employees` table). Lookup by `{USER_EMAIL}` (exact match on `work_email`) with fuzzy fallback on `{USER_NAME}`. If the cache returns no match after the full escalation ladder, ask: "What's your Odoo employee name?"
+**Delegate to the alice-odoo-cache skill** (`employees` table). Lookup by `{USER_EMAIL}` (exact match on `work_email`) with fuzzy fallback on `{USER_NAME}`. If the cache returns no match after the full escalation ladder, ask: "What's your Odoo employee name?"
+
+> **Never call `odoo_search` for `hr.employee` or `res.users` directly** — always go through the cache so the lookup result is persisted to `employees.json` / `users.json` for next session.
 
 Pass `employee_id` explicitly when creating entries even though most Odoo configs auto-fill it from the logged-in user.
 
@@ -84,7 +86,7 @@ Pass `employee_id` explicitly when creating entries even though most Odoo config
 
 ## Resolve Project Name
 
-**Delegate to `skills/alice-odoo/alice-odoo-cache.md`** (`projects` table). See the same delegation in [`alice-odoo-tasks.md`](alice-odoo-tasks.md) under **Resolve Project Name**.
+**Delegate to the alice-odoo-cache skill** (`projects` table). See the same delegation in [`alice-odoo-tasks.md`](alice-odoo-tasks.md) under **Resolve Project Name**.
 
 ---
 

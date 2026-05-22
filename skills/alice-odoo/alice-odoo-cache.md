@@ -84,9 +84,15 @@ This is the **canonical resolution flow** for any cacheable lookup. Each step ru
 **Input:** user query `q`, target table `T`.
 
 ### Step 1 — Cache freshness check
-- Read `cache_manifest.json` (treat missing file as fully stale)
-- If `T.last_updated + T.ttl_seconds > now`: cache is fresh → Step 3
-- Else → Step 2
+- Read `cache_manifest.json`
+- **Treat as fully stale (go to Step 2) if ANY of these hold:**
+  - `cache_manifest.json` does not exist
+  - `cache_manifest.json` has no entry for table `T` (e.g. first-ever lookup of `users` / `employees`)
+  - The JSON file for `T` (`<T>.json`) does not exist on disk
+  - `T.last_updated + T.ttl_seconds <= now` (TTL expired)
+- Otherwise cache is fresh → Step 3
+
+> **Why this matters:** a missing manifest key is NOT the same as "no refresh needed". The first lookup of any table will have no manifest entry — Step 2 must fire to populate it. Never skip Step 2 just because the manifest key is absent.
 
 ### Step 2 — TTL refresh (passive)
 - Query Odoo MCP for the full table (see **Per-Table Recipes** below)
@@ -108,7 +114,9 @@ This is the **canonical resolution flow** for any cacheable lookup. Each step ru
 
 ### Step 5 — Live Odoo single-record search (final fallback)
 - Run targeted `odoo_search` with the user's raw query, e.g. `domain=[["name", "ilike", q]]`
-- If found: append the record to the cache JSON (do **NOT** touch the manifest timestamp — append is not a full refresh), return it
+- If found: append the record to the cache JSON, then return it
+  - If `<T>.json` doesn't exist yet, create it with a single-record list under the table's top-level key (e.g. `{"users": [<record>]}`)
+  - Do **NOT** touch the manifest timestamp — append is not a full refresh
 - Else → Step 6
 
 ### Step 6 — Declare not found
