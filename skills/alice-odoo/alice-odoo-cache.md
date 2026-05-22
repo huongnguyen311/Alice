@@ -84,20 +84,27 @@ This is the **canonical resolution flow** for any cacheable lookup. Each step ru
 **Input:** user query `q`, target table `T`.
 
 ### Step 1 — Cache freshness check
-- Read `cache_manifest.json`
-- **Treat as fully stale (go to Step 2) if ANY of these hold:**
-  - `cache_manifest.json` does not exist
-  - `cache_manifest.json` has no entry for table `T` (e.g. first-ever lookup of `users` / `employees`)
+- Read `cache_manifest.json`.
+- **Self-heal first.** If `<T>.json` exists with records BUT the manifest is missing the entry for `T`, this is a leftover from a prior Step 2c failure. Re-derive the manifest entry from the file (`source_count = len(records)`, `last_updated = file mtime`, `ttl_seconds` from the TTL table) and atomic-write the manifest back. Then re-read the manifest and continue below — do NOT mark the cache as stale and do NOT re-query Odoo just to fix this.
+- **Treat as fully stale (go to Step 2) if ANY of these hold AFTER self-heal:**
+  - `cache_manifest.json` does not exist (and there's no JSON file to self-heal from)
+  - `cache_manifest.json` has no entry for table `T` AND `<T>.json` does not exist (first-ever lookup)
   - The JSON file for `T` (`<T>.json`) does not exist on disk
   - `T.last_updated + T.ttl_seconds <= now` (TTL expired)
-- Otherwise cache is fresh → Step 3
+- Otherwise cache is fresh → Step 3.
 
-> **Why this matters:** a missing manifest key is NOT the same as "no refresh needed". The first lookup of any table will have no manifest entry — Step 2 must fire to populate it. Never skip Step 2 just because the manifest key is absent.
+> **Why this matters:** a missing manifest key is NOT the same as "no refresh needed". The first lookup of any table will have no manifest entry — Step 2 must fire to populate it. But if the JSON file ALREADY has data (Step 2b ran, Step 2c didn't), self-heal the manifest from the file instead of pointlessly re-fetching from Odoo.
 
 ### Step 2 — TTL refresh (passive)
-- Query Odoo MCP for the full table (see **Per-Table Recipes** below)
-- Atomic write the JSON, update `cache_manifest.json`
-- Continue to Step 3
+
+Three sub-steps. **All three MUST run** — skipping (c) is the most common bug because it produces a JSON file without a manifest entry, which makes the next session declare the cache stale again and re-fetch forever. The user sees repeated Odoo queries for data that's already on disk.
+
+a. Query Odoo MCP for the full table (see **Per-Table Recipes** below).
+b. **Atomic write** the JSON file (`<T>.tmp` → rename over `<T>.json`).
+c. **Update `cache_manifest.json` for table `T`** — set `last_updated` to now (ISO 8601 UTC), `ttl_seconds` per the TTL table, and any per-table metadata (`source_count`, `project_ids`, `models`). If the manifest file or the `T` key doesn't exist yet, create it. Atomic write the manifest the same way.
+d. Continue to Step 3.
+
+> **Recovery rule (silent self-heal).** If at Step 1 you find a JSON file that exists with records but the manifest is missing the entry for `T`, treat it as a Step 2c failure from a prior session — re-derive the manifest entry from the file contents (`source_count = len(records)`, `last_updated = file mtime`) and write it back atomically. Do NOT re-query Odoo just to fix this. Then proceed to Step 3.
 
 ### Step 3 — Local fuzzy match against cache
 - Read the cached JSON, run the **Fuzzy Matcher** (below) on the records
@@ -177,7 +184,7 @@ odoo_search(model="project.project",
   fields=["id", "name", "active"],
   limit=500)
 ```
-Write to `projects.json` as `{"projects": [...]}`.
+Write to `projects.json` as `{"projects": [...]}`. **Then update `cache_manifest.json.projects` (Step 2c)** — `last_updated = now`, `ttl_seconds = 604800`, `source_count = len(projects)`.
 
 **Single-record fallback (Step 5):**
 ```
@@ -218,7 +225,7 @@ odoo_search(model="res.users",
   fields=["id", "name", "login", "partner_id"],
   limit=500)
 ```
-Write to `users.json` as `{"users": [...]}`.
+Write to `users.json` as `{"users": [...]}`. **Then update `cache_manifest.json.users` (Step 2c)** — `last_updated = now`, `ttl_seconds = 1209600`, `source_count = len(users)`.
 
 **Lookup uses fuzzy matcher** on `name` field (also accept exact match on `login` for emails).
 
@@ -233,7 +240,7 @@ odoo_search(model="hr.employee",
   fields=["id", "name", "work_email", "user_id"],
   limit=500)
 ```
-Write to `employees.json` as `{"employees": [...]}`.
+Write to `employees.json` as `{"employees": [...]}`. **Then update `cache_manifest.json.employees` (Step 2c)** — `last_updated = now`, `ttl_seconds = 1209600`, `source_count = len(employees)`.
 
 **Lookup:** if user gives an email, try exact match on `work_email` first; otherwise fuzzy on `name`.
 
@@ -247,7 +254,7 @@ odoo_fields(model="<model_name>", fields=[<list of field names you care about>])
 ```
 Or call without `fields=` to get the entire schema (heavier but complete).
 
-Write under key `"<model_name>"` in `fields_schemas.json`.
+Write under key `"<model_name>"` in `fields_schemas.json`. **Then update `cache_manifest.json.fields_schemas` (Step 2c)** — `last_updated = now`, `ttl_seconds = 31536000`, and ensure `<model_name>` is in the `models` list.
 
 **No fuzzy match** — field names are copied from docs / introspection, exact match only. If a requested field is missing, fall through to live `odoo_fields` (Step 5).
 
