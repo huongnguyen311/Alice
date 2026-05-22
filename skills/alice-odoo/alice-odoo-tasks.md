@@ -64,14 +64,16 @@ Ask **all** missing required fields in **one message** — never one at a time.
 
 If the user says "assign to me", "assign it to myself", or similar, resolve the user's Odoo account via the cache:
 
-- Find user matching `{USER_NAME}` (or `{USER_EMAIL}` as a fallback) via `skills/alice-odoo/alice-odoo-cache.md` (`users` table)
+- Find user matching `{USER_NAME}` (or `{USER_EMAIL}` as a fallback) via the **alice-odoo-cache** skill (`users` table)
 - If the cache returns no match after the full escalation ladder, ask: "What's your Odoo username?"
+
+> **Never call `odoo_search` for `res.users` directly** — always go through the cache so the lookup result is persisted to `users.json` for next session.
 
 ---
 
 ## Resolve Project Name
 
-**Delegate to `skills/alice-odoo/alice-odoo-cache.md`.** Ask the cache skill to resolve project `<q>` via the **Lookup Escalation Ladder** (cache → fuzzy match → silent force-refresh on miss → live `odoo_search` → ask user). The cache handles fuzzy matching (typos, word swaps, abbreviations) and disambiguation locally.
+**Delegate to the alice-odoo-cache skill.** Ask the cache skill to resolve project `<q>` via the **Lookup Escalation Ladder** (cache → fuzzy match → silent force-refresh on miss → live `odoo_search` → ask user). The cache handles fuzzy matching (typos, word swaps, abbreviations) and disambiguation locally.
 
 **Within a single conversation:** once a project is resolved, reuse `(id, name)` — do not re-invoke the cache. The cache layer covers cross-session persistence; the in-conversation reuse rule covers redundant calls within a turn.
 
@@ -83,7 +85,7 @@ If the user says "assign to me", "assign it to myself", or similar, resolve the 
 
 1. Validate required fields (task title + project name). Ask if missing.
 2. Resolve project using the **Resolve Project Name** algorithm above to get `project_id`.
-3. If assignee given, resolve user ID via `skills/alice-odoo/alice-odoo-cache.md` (`users` table — fuzzy match on name, exact match on email).
+3. If assignee given, resolve user ID via the **alice-odoo-cache** skill (`users` table — fuzzy match on name, exact match on email).
 4. Create the task:
    ```
    odoo_create(model="project.task", values={
@@ -138,7 +140,7 @@ odoo_write(model="project.task", ids=[<task_id>], values={
 Stages are **project-specific** in Odoo — always resolve via cache before writing.
 
 1. Resolve `project_id` using the **Resolve Project Name** section (cache-delegated).
-2. Resolve the target stage via `skills/alice-odoo/alice-odoo-cache.md` (`stages` table, scoped to `<project_id>`). The cache handles fuzzy matching like `"wip"` → `"In Progress"` and disambiguation locally.
+2. Resolve the target stage via the **alice-odoo-cache** skill (`stages` table, scoped to `<project_id>`). The cache handles fuzzy matching like `"wip"` → `"In Progress"` and disambiguation locally.
 3. Write the stage:
    ```
    odoo_write(model="project.task", ids=[<task_id>], values={"stage_id": <matched_stage_id>})
