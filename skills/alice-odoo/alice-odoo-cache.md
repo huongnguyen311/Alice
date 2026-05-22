@@ -44,7 +44,7 @@ All cache files live in `{ALICE_ROOT}/data/odoo_cache/` (per-device, gitignored 
 | File | Contents |
 |---|---|
 | `projects.json` | `{"projects": [{"id", "name", "active"}, ...]}` — all active projects |
-| `stages.json` | `{"<project_id>": [{"id", "name", "sequence"}, ...]}` — stages per project |
+| `stages.json` | `{"stages": [{"id", "name", "sequence", "project_ids"}, ...]}` — flat global list. Each record carries its own `project_ids` (empty = available to all projects). Stages are M2M to projects in Odoo, so the same record can belong to many projects — do not key by project_id. |
 | `users.json` | `{"users": [{"id", "name", "login", "partner_id"}, ...]}` |
 | `employees.json` | `{"employees": [{"id", "name", "work_email", "user_id"}, ...]}` |
 | `fields_schemas.json` | `{"<model>": {"<field>": {"type", "required", ...}}}` |
@@ -68,7 +68,7 @@ If `{ALICE_ROOT}/data/odoo_cache/` does not exist, create it before first write.
 ```json
 {
   "projects":       {"last_updated": "2026-05-19T10:30:00Z", "ttl_seconds": 604800,  "source_count": 47},
-  "stages":         {"last_updated": "2026-05-19T10:30:00Z", "ttl_seconds": 2592000, "project_ids": [1, 3]},
+  "stages":         {"last_updated": "2026-05-19T10:30:00Z", "ttl_seconds": 2592000, "source_count": 70},
   "users":          {"last_updated": "2026-05-19T10:30:00Z", "ttl_seconds": 1209600, "source_count": 23},
   "employees":      {"last_updated": "2026-05-19T10:30:00Z", "ttl_seconds": 1209600, "source_count": 23},
   "fields_schemas": {"last_updated": "2026-05-19T10:30:00Z", "ttl_seconds": 31536000, "models": ["account.analytic.line", "project.task", "project.project"]}
@@ -199,20 +199,24 @@ If 1 result: append; if multiple: present with fuzzy scores and ask user.
 
 ---
 
-### stages (`project.task.type`) — keyed by project_id
+### stages (`project.task.type`) — flat global list
 
-**Full refresh query (per project):**
+Stages in `project.task.type` are M2M to projects (`project_ids` field). The same stage record can belong to many projects, or to none (an unassigned/global stage). Caching per-project would duplicate every shared record and force redundant refreshes — so cache the whole table once and filter at lookup time.
+
+**Full refresh query (entire table):**
 ```
 odoo_search(model="project.task.type",
-  domain=[["project_ids", "in", [<project_id>]]],
-  fields=["id", "name", "sequence"],
-  limit=50)
+  fields=["id", "name", "sequence", "project_ids"],
+  limit=500)
 ```
-Write under key `str(project_id)` in `stages.json`. Update `cache_manifest.json` `stages.project_ids` to include this project_id and bump `last_updated`.
+Write to `stages.json` as `{"stages": [...]}`. Update `cache_manifest.json.stages` — `last_updated = now`, `ttl_seconds = 2592000`, `source_count = len(stages)`.
 
-**Full refresh of all known projects (when "refresh odoo stages" fires):** loop over every `project_id` in `cache_manifest.json.stages.project_ids` and re-query each.
+**Lookup `Skill(skill="alice-odoo-cache", args="look up stage '<q>' in project <project_id>")`:**
+1. Filter the flat list to candidates for `<project_id>`: records where `<project_id> in record.project_ids` OR `record.project_ids == []` (empty = available to any project).
+2. Run the fuzzy matcher on that filtered subset, sorted by `sequence`.
+3. If multiple candidates have the same name (e.g. "Done" exists as both a global record and a project-specific one), prefer the project-specific match (non-empty `project_ids` containing the target).
 
-**Lookup uses fuzzy matcher** scoped to that project's stage list.
+**Lookup without a project (`args="look up stage '<q>'"`):** fuzzy match against the entire flat list. If multiple records share the name, list them with their `project_ids` and ask the user which one.
 
 ---
 
@@ -301,7 +305,7 @@ Bypass TTL when the user knows the cache is stale.
 |---|---|
 | "refresh odoo cache" / "reload odoo cache" / "odoo cache is stale" | Refresh ALL tables |
 | "refresh odoo projects" | projects only |
-| "refresh odoo stages" | stages only (loop over `cache_manifest.json.stages.project_ids`) |
+| "refresh odoo stages" | stages only (single full-table refresh) |
 | "refresh odoo users" | users only |
 | "refresh odoo employees" | employees only |
 | "refresh odoo fields" | fields_schemas only (loop over `cache_manifest.json.fields_schemas.models`) |
@@ -369,8 +373,8 @@ The cache skill runs the escalation ladder and returns the resolved record (or a
 | Cache file | Key | Fields stored |
 |---|---|---|
 | `projects.json` | `projects[]` | `id`, `name`, `active` |
-| `stages.json` | `<project_id>[]` | `id`, `name`, `sequence` |
+| `stages.json` | `stages[]` | `id`, `name`, `sequence`, `project_ids` |
 | `users.json` | `users[]` | `id`, `name`, `login`, `partner_id` |
 | `employees.json` | `employees[]` | `id`, `name`, `work_email`, `user_id` |
 | `fields_schemas.json` | `<model>` | full `odoo_fields` response |
-| `cache_manifest.json` | `<table>` | `last_updated` (ISO 8601 UTC), `ttl_seconds`, plus per-table metadata (`source_count`, `project_ids`, `models`) |
+| `cache_manifest.json` | `<table>` | `last_updated` (ISO 8601 UTC), `ttl_seconds`, plus per-table metadata (`source_count`, `models`) |

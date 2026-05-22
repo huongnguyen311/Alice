@@ -206,7 +206,7 @@ Stages are **project-specific** in Odoo — always resolve via cache before writ
 |---|---|---|
 | `name` | char | Task title |
 | `project_id` | many2one | Link to `project.project` |
-| `stage_id` | many2one | Link to `project.task.type` (project-specific) |
+| `stage_id` | many2one | Link to `project.task.type`. M2M to projects — a stage record may be shared across many projects or scoped to one (empty `project_ids` = global). |
 | `user_ids` | many2many | Assignees — use `[[6, 0, [id1, id2]]]` syntax to replace |
 | `date_deadline` | date | Format: `YYYY-MM-DD` |
 | `description` | html | Full description — use `alice-odoo-task-notes.md` for structured content |
@@ -226,4 +226,4 @@ Stages are **project-specific** in Odoo — always resolve via cache before writ
 | "done", "finished", "complete" | Done |
 | "cancelled", "dropped" | Cancelled |
 
-Always confirm via `project.task.type` search — stages vary by project.
+Always resolve via the alice-odoo-cache skill — stage records are M2M to projects and the same record may belong to many projects (or none).
