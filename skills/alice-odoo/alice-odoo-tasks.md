@@ -212,7 +212,7 @@ Stages are **project-specific** in Odoo — always resolve via cache before writ
 | `description` | html | Full description — use `alice-odoo-task-notes.md` for structured content |
 | `priority` | selection | `"0"` = Normal, `"1"` = High |
 | `tag_ids` | many2many | Task tags |
-| `kanban_state` | selection | `normal`, `done`, `blocked` |
+| `state` | selection (required) | Odoo 19 replaced `kanban_state`. Values: `01_in_progress`, `02_changes_requested`, `03_approved`, `1_done`, `1_canceled`. Use `is_closed` (bool) to check if a state counts as closed without hardcoding values. |
 
 ---
 
