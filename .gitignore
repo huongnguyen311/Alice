@@ -7,6 +7,7 @@ data/
 # Alice personal config — gitignored (copy from *.example files in config/)
 config/install-config.json
 config/skill-personal.json
+config/alice-ios-deploy.json
 
 # Alice personal memory files — contain real identity/context data, gitignored
 # Copy the *.example counterpart and fill in your own values.
