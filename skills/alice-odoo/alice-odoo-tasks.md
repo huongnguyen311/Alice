@@ -87,7 +87,7 @@ If the user says "assign to me", "assign it to myself", or similar, resolve the 
 
 ## Auto-resolve Project from Binding
 
-Before asking "which project?" or delegating to the cache, check for a per-repo binding written by the **alice-project-bind** skill:
+This is **Step A of Resolve Project Name** — it runs first, before any cache delegation. Check for a per-repo binding written by the **alice-project-bind** skill:
 
 ```bash
 test -f .alice/project.md && cat .alice/project.md
@@ -112,11 +112,15 @@ If `.alice/project.md` doesn't exist, fall through to **Resolve Project Name** b
 
 ## Resolve Project Name
 
-**Invoke the alice-odoo-cache skill via the Skill tool:** `Skill(skill="alice-odoo-cache", args="resolve project name '<q>'")`. The cache skill runs the **Lookup Escalation Ladder** (cache → fuzzy match → silent force-refresh on miss → live `odoo_search` → ask user) and handles fuzzy matching (typos, word swaps, abbreviations) and disambiguation locally.
+**This is the single entry point for project resolution.** Every action below (Create / Find / Change Stage / Update) MUST go through these steps in order — do NOT skip straight to the cache.
+
+**Step A — Binding check (always first).** Run the **Auto-resolve Project from Binding** section above. If `.alice/project.md` exists AND the user did not explicitly name a different project in their request, use the binding's `(ID, NAME)` and **stop** — do not invoke the cache for this lookup. Append `(via repo binding)` to the confirmation.
+
+**Step B — Cache delegation (only if Step A did not resolve).** Invoke the alice-odoo-cache skill via the Skill tool: `Skill(skill="alice-odoo-cache", args="resolve project name '<q>'")`. The cache skill runs the **Lookup Escalation Ladder** (cache → fuzzy match → silent force-refresh on miss → live `odoo_search` → ask user) and handles fuzzy matching (typos, word swaps, abbreviations) and disambiguation locally.
 
 > Do NOT read `alice-odoo-cache.md` with the Read tool to perform the lookup yourself — that bypasses the cache files and the manifest never gets updated.
 
-**Within a single conversation:** once a project is resolved, reuse `(id, name)` — do not re-invoke the cache. The cache layer covers cross-session persistence; the in-conversation reuse rule covers redundant calls within a turn.
+**Within a single conversation:** once a project is resolved, reuse `(id, name)` — do not re-invoke the binding check or the cache. The cache layer covers cross-session persistence; the in-conversation reuse rule covers redundant calls within a turn.
 
 **After resolution — always show the full Odoo project name in confirmations** so the user can verify the match. If the cache had to force-refresh to find the project, surface that as `(via force-refresh)` in the confirmation.
 

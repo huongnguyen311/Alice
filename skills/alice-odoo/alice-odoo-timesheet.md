@@ -100,7 +100,7 @@ Pass `employee_id` explicitly when creating entries even though most Odoo config
 
 ## Auto-resolve Project from Binding
 
-Before asking "which project?" or delegating to the cache, check for a per-repo binding written by the **alice-project-bind** skill:
+This is **Step A of Resolve Project Name** — it runs first, before any cache delegation. Check for a per-repo binding written by the **alice-project-bind** skill:
 
 ```bash
 test -f .alice/project.md && cat .alice/project.md
@@ -123,7 +123,13 @@ If `.alice/project.md` doesn't exist, fall through to **Resolve Project Name** b
 
 ## Resolve Project Name
 
-**Invoke `Skill(skill="alice-odoo-cache", args="resolve project name '<q>'")`** — the cache runs the full Lookup Escalation Ladder. See the same delegation in [`alice-odoo-tasks.md`](alice-odoo-tasks.md) under **Resolve Project Name** for the rationale; do NOT read the cache skill file with the Read tool.
+**This is the single entry point for project resolution.** Every action below (Log / Batch Log / View / Edit / Delete) MUST go through these steps in order — do NOT skip straight to the cache.
+
+**Step A — Binding check (always first).** Run the **Auto-resolve Project from Binding** section above. If `.alice/project.md` exists AND the user did not explicitly name a different project in their request, use the binding's `(ID, NAME)` and **stop** — do not invoke the cache for this lookup. Append `(via repo binding)` to the confirmation.
+
+**Step B — Cache delegation (only if Step A did not resolve).** Invoke `Skill(skill="alice-odoo-cache", args="resolve project name '<q>'")` — the cache runs the full Lookup Escalation Ladder. See the same delegation in [`alice-odoo-tasks.md`](alice-odoo-tasks.md) under **Resolve Project Name** for the rationale; do NOT read the cache skill file with the Read tool.
+
+**Within a single conversation:** once a project is resolved, reuse `(id, name)` — do not re-invoke the binding check or the cache.
 
 ---
 
