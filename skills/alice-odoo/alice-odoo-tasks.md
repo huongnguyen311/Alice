@@ -58,6 +58,8 @@ Ask **all** missing required fields in **one message** — never one at a time.
 
 **Rule:** Batch all missing-field questions into a single message. Never ask field by field.
 
+> **Project name is auto-resolved from `.alice/project.md` if present.** See **Auto-resolve Project from Binding** below — when a repo binding exists, don't ask "which project?"; use the binding silently.
+
 ---
 
 ## Self-Assignment
@@ -68,6 +70,31 @@ If the user says "assign to me", "assign it to myself", or similar, resolve the 
 - If the cache returns no match after the full escalation ladder, ask: "What's your Odoo username?"
 
 > **Never call `odoo_search` for `res.users` directly** — always go through the cache so the lookup result is persisted to `users.json` for next session.
+
+---
+
+## Auto-resolve Project from Binding
+
+Before asking "which project?" or delegating to the cache, check for a per-repo binding written by the **alice-project-bind** skill:
+
+```bash
+test -f .alice/project.md && cat .alice/project.md
+```
+
+If the file exists, parse the two-fact schema:
+
+```bash
+ID=$(grep -E '^- Odoo Project ID:' .alice/project.md | sed -E 's/^- Odoo Project ID:[[:space:]]*//')
+NAME=$(grep -E '^- Odoo Project Name:' .alice/project.md | sed -E 's/^- Odoo Project Name:[[:space:]]*//')
+```
+
+Use `(ID, NAME)` as the resolved project — **skip the cache delegation entirely** for this lookup. Append `(via repo binding)` to the confirmation line so the user knows.
+
+**User input always wins.** If the user explicitly names a project in their request (e.g. *"create task 'foo' in [Project] TRS"*), use the explicit name and ignore the binding — run the normal cache delegation below.
+
+If `.alice/project.md` doesn't exist, fall through to **Resolve Project Name** below.
+
+> If a user repeatedly works in this repo without a binding, suggest once: *"Want me to bind this directory to <project> so I stop asking? Say 'bind this repo to <project>'."*
 
 ---
 

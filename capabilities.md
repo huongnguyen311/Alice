@@ -45,6 +45,7 @@ This is Alice's **master routing index**. Scan this file first to identify which
 | Save structured notes or content to an Odoo task | "task notes", "save notes to task", "log to task", "add content to task", "update task description" | `skills/alice-odoo/alice-odoo-task-notes.md` |
 | Log, view, edit, or delete Odoo timesheet entries | "log hours", "log time", "timesheet", "track hours", "log work", "record time", "show my timesheet", "edit timesheet" | `skills/alice-odoo/alice-odoo-timesheet.md` |
 | Local cache for Odoo projects/stages/users/employees/fields — fuzzy match + force-refresh | "resolve project name", "look up odoo stage", "find odoo user", "find odoo employee", "refresh odoo cache", "refresh odoo projects", "odoo cache is stale" | `skills/alice-odoo/alice-odoo-cache.md` |
+| Bind the current working directory to an Odoo project so other Alice skills skip 'which project?' prompts | "bind this repo to", "set odoo project for this directory", "what odoo project is this repo bound to", "unbind this repo" | `skills/alice-project-bind.md` |
 | Check connectivity of Alice's services and MCP tools | "connection check", "check connection", "service status", "are services connected", "is alice connected" | `skills/alice-connection-check.md` |
 | Suggest what to eat — Vietnamese-focused meal suggestions | "what to eat", "suggest food", "ăn gì", "gợi ý món ăn", "suggest a meal", "hôm nay ăn gì" | `skills/alice-suggest-meal.md` |
 | Read, write, update, delete, search, open Google Sheets | "google sheet", "spreadsheet", "sheet", "đọc sheet", "ghi sheet", "cập nhật sheet", "thêm vào sheet", "xóa dòng", "tìm trong sheet", "mở sheet", "open sheet" | `skills/Google-Sheet/skill.md` |
@@ -96,4 +97,4 @@ When Alice creates a new skill, memory file, or uses a new MCP:
 - Skill paths always include the `skills/` prefix — `skills/alice-foo.md` (flat) or `skills/alice-bar/alice-bar-baz.md` (grouped). Grouping is allowed for clusters of ≥3 related skills; see the "Naming convention" sub-block in `CLAUDE.md` for the full rule (group directories must use the `alice-` prefix).
 
 ---
-*Last updated: 2026-05-19 (alice-odoo-cache skill added — local cache layer with fuzzy match + force-refresh for Odoo projects/stages/users/employees/field schemas)*
+*Last updated: 2026-05-22 (alice-project-bind skill added — per-repo `.alice/project.md` binding so Odoo skills auto-resolve the current project)*

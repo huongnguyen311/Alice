@@ -4,6 +4,9 @@ credentials/*
 # Runtime data — logs, outputs, tokens
 data/
 
+# Per-repo Alice bindings (written by alice-project-bind into the current working directory)
+.alice/
+
 # Alice personal config — gitignored (copy from *.example files in config/)
 config/install-config.json
 config/skill-personal.json

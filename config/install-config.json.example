@@ -36,6 +36,14 @@
       "enabled": true
     },
     {
+      "name": "alice-project-bind",
+      "file": "alice-project-bind.md",
+      "type": "mcp",
+      "mcp_required": "odoo",
+      "warning": null,
+      "enabled": true
+    },
+    {
       "name": "alice-book-meeting",
       "file": "alice-book-meeting.md",
       "type": "mcp",

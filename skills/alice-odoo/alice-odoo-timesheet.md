@@ -62,6 +62,8 @@ Ask **all** missing required fields in **one message** — never one at a time.
 
 **Rule:** Batch all missing-field questions into a single message. Never ask field by field.
 
+> **Project name is auto-resolved from `.alice/project.md` if present.** See **Auto-resolve Project from Binding** below — when a repo binding exists, don't ask "which project?"; use the binding silently.
+
 ---
 
 ## Field Discovery
@@ -81,6 +83,29 @@ Timesheet entries belong to an `hr.employee`, not directly to `res.users`.
 > **Never call `odoo_search` for `hr.employee` or `res.users` directly** — always go through the cache so the lookup result is persisted to `employees.json` / `users.json` for next session.
 
 Pass `employee_id` explicitly when creating entries even though most Odoo configs auto-fill it from the logged-in user.
+
+---
+
+## Auto-resolve Project from Binding
+
+Before asking "which project?" or delegating to the cache, check for a per-repo binding written by the **alice-project-bind** skill:
+
+```bash
+test -f .alice/project.md && cat .alice/project.md
+```
+
+If the file exists, parse the two-fact schema:
+
+```bash
+ID=$(grep -E '^- Odoo Project ID:' .alice/project.md | sed -E 's/^- Odoo Project ID:[[:space:]]*//')
+NAME=$(grep -E '^- Odoo Project Name:' .alice/project.md | sed -E 's/^- Odoo Project Name:[[:space:]]*//')
+```
+
+Use `(ID, NAME)` as the resolved project — **skip the cache delegation entirely** for this lookup. Append `(via repo binding)` to the confirmation line so the user knows.
+
+**User input always wins.** If the user explicitly names a project in their request (e.g. *"log 2 hours on [Project] TRS bug fix"*), use the explicit name and ignore the binding — run the normal cache delegation below.
+
+If `.alice/project.md` doesn't exist, fall through to **Resolve Project Name** below.
 
 ---
 

@@ -96,9 +96,32 @@ Use in the heading — enables grep-based retrieval:
 
 ---
 
+## Auto-resolve Project from Binding
+
+Before searching for a task by name, check for a per-repo binding written by the **alice-project-bind** skill:
+
+```bash
+test -f .alice/project.md && cat .alice/project.md
+```
+
+If the file exists, parse the project from the two-fact schema:
+
+```bash
+ID=$(grep -E '^- Odoo Project ID:' .alice/project.md | sed -E 's/^- Odoo Project ID:[[:space:]]*//')
+NAME=$(grep -E '^- Odoo Project Name:' .alice/project.md | sed -E 's/^- Odoo Project Name:[[:space:]]*//')
+```
+
+Use the binding's `ID` as a `project_id` filter when searching for the task — this narrows the task lookup from "all projects" to "this project" and avoids matching the same task name in unrelated projects. Append `(via repo binding)` to the resolution confirmation.
+
+**User input always wins.** If the user explicitly names a project in their request, use that project instead and ignore the binding.
+
+If `.alice/project.md` doesn't exist or the user already gave a task ID, skip this step.
+
+---
+
 ## Execution Steps
 
-1. Find the task — `odoo_search` by name/project, or use known task ID
+1. Find the task — `odoo_search` by name (filtered by `project_id` from the binding above, if present), or use known task ID
 2. Read current description:
    ```
    odoo_get(model="project.task", id=<task_id>, fields=["name", "description"])
