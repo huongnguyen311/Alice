@@ -27,6 +27,18 @@ Use `odoo_search`, `odoo_create`, `odoo_write`, `odoo_get`, `odoo_fields` direct
 
 **Model:** `account.analytic.line` — timesheet entries are analytic lines with `project_id` set.
 
+### How to delegate to alice-odoo-cache
+
+Whenever this skill says "delegate to the alice-odoo-cache skill" (projects, employees, users, field schemas), **invoke it via the Skill tool** — do NOT read the cache skill file with the Read tool.
+
+```
+Skill(skill="alice-odoo-cache", args="resolve project name '<q>'")
+Skill(skill="alice-odoo-cache", args="find employee for '{USER_EMAIL}'")
+Skill(skill="alice-odoo-cache", args="check fields for model 'account.analytic.line'")
+```
+
+Reading the cache file inline bypasses the skill's runtime, skips cache file I/O, and leaves the manifest unwritten — the next session will then re-query Odoo for data already on disk. Always go through the Skill tool.
+
 **MCP parameter types — always pass native JSON, never strings:**
 - `fields`: array of strings → `["id", "name"]`, not `"[\"id\", \"name\"]"`
 - `domain`: array of triplets → `[["name", "ilike", "foo"]]`, not a stringified version
@@ -68,7 +80,7 @@ Ask **all** missing required fields in **one message** — never one at a time.
 
 ## Field Discovery
 
-Some Odoo installs customize the timesheet model. **Delegate to the alice-odoo-cache skill** (`fields_schemas` table, model `account.analytic.line`) — the cache persists the schema across sessions so this only runs against Odoo once per instance.
+Some Odoo installs customize the timesheet model. **Invoke `Skill(skill="alice-odoo-cache", args="check fields for model 'account.analytic.line'")`** — the cache persists the schema across sessions so this only runs against Odoo once per instance.
 
 Verify these fields are present: `name`, `date`, `unit_amount`, `project_id`, `task_id`, `employee_id`, `user_id`. If any are missing or renamed, ask the user before proceeding.
 
@@ -78,9 +90,9 @@ Verify these fields are present: `name`, `date`, `unit_amount`, `project_id`, `t
 
 Timesheet entries belong to an `hr.employee`, not directly to `res.users`.
 
-**Delegate to the alice-odoo-cache skill** (`employees` table). Lookup by `{USER_EMAIL}` (exact match on `work_email`) with fuzzy fallback on `{USER_NAME}`. If the cache returns no match after the full escalation ladder, ask: "What's your Odoo employee name?"
+**Invoke `Skill(skill="alice-odoo-cache", args="find employee for '{USER_EMAIL}'")`** (exact match on `work_email`) with fuzzy fallback on `{USER_NAME}` (`Skill(skill="alice-odoo-cache", args="find employee matching '{USER_NAME}'")`). If the cache returns no match after the full escalation ladder, ask: "What's your Odoo employee name?"
 
-> **Never call `odoo_search` for `hr.employee` or `res.users` directly** — always go through the cache so the lookup result is persisted to `employees.json` / `users.json` for next session.
+> **Never call `odoo_search` for `hr.employee` or `res.users` directly, and never Read the cache skill file** — always invoke alice-odoo-cache via the Skill tool so the lookup result is persisted to `employees.json` / `users.json` for next session.
 
 Pass `employee_id` explicitly when creating entries even though most Odoo configs auto-fill it from the logged-in user.
 
@@ -111,7 +123,7 @@ If `.alice/project.md` doesn't exist, fall through to **Resolve Project Name** b
 
 ## Resolve Project Name
 
-**Delegate to the alice-odoo-cache skill** (`projects` table). See the same delegation in [`alice-odoo-tasks.md`](alice-odoo-tasks.md) under **Resolve Project Name**.
+**Invoke `Skill(skill="alice-odoo-cache", args="resolve project name '<q>'")`** — the cache runs the full Lookup Escalation Ladder. See the same delegation in [`alice-odoo-tasks.md`](alice-odoo-tasks.md) under **Resolve Project Name** for the rationale; do NOT read the cache skill file with the Read tool.
 
 ---
 

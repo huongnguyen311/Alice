@@ -307,12 +307,21 @@ Bypass TTL when the user knows the cache is stale.
 
 ## Delegating from Other Skills
 
-Other Odoo skills should phrase their lookups as:
+Other Odoo skills MUST invoke this skill **via the Skill tool** — not by reading this file with the Read tool. Reading the file inline bypasses the cache runtime, skips the JSON file I/O, and leaves the manifest unwritten, so the next session re-queries Odoo for data already on disk.
 
-> "Resolve project name '<q>' via alice-odoo-cache"
-> "Look up stage '<q>' in project <project_id> via alice-odoo-cache"
-> "Find employee for '{USER_EMAIL}' via alice-odoo-cache"
-> "Check fields for model 'account.analytic.line' via alice-odoo-cache"
+**Correct (invoke via Skill tool):**
+
+```
+Skill(skill="alice-odoo-cache", args="resolve project name '<q>'")
+Skill(skill="alice-odoo-cache", args="look up stage '<q>' in project <project_id>")
+Skill(skill="alice-odoo-cache", args="find user matching '<name-or-email>'")
+Skill(skill="alice-odoo-cache", args="find employee for '{USER_EMAIL}'")
+Skill(skill="alice-odoo-cache", args="check fields for model 'account.analytic.line'")
+```
+
+**Incorrect (do NOT do this):**
+
+- `Read(file_path=".../alice-odoo-cache.md")` followed by running the escalation ladder yourself — this is the bug that produces repeated Odoo queries and missing manifest entries.
 
 The cache skill runs the escalation ladder and returns the resolved record (or asks the user / declares not-found).
 
