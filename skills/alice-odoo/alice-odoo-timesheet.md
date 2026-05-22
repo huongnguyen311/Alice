@@ -27,6 +27,12 @@ Use `odoo_search`, `odoo_create`, `odoo_write`, `odoo_get`, `odoo_fields` direct
 
 **Model:** `account.analytic.line` — timesheet entries are analytic lines with `project_id` set.
 
+**MCP parameter rules** — the tool schema is source of truth; do NOT use Odoo XML-RPC conventions in MCP calls:
+- `odoo_get` takes `ids=[<int>, ...]` (array), never `id=<int>` (singular)
+- `odoo_execute` takes `ids=[...]` and optional `kwargs={}` — there is no `args` parameter. To delete records, use `method="unlink"` with `ids=[...]`
+- `odoo_fields` takes only `model` — no `fields=` filter
+- All `domain`, `fields`, `ids` values must be native JSON arrays, never stringified
+
 ### How to delegate to alice-odoo-cache
 
 Whenever this skill says "delegate to the alice-odoo-cache skill" (projects, employees, users, field schemas), **invoke it via the Skill tool** — do NOT read the cache skill file with the Read tool.
@@ -241,7 +247,7 @@ Output: a table with date, hours, project, task, description. End with the **tot
    `"Delete this entry? — 2.0h on '[task]' from [date], description: '[description]'."`
 3. After explicit confirmation:
    ```
-   odoo_execute(model="account.analytic.line", method="unlink", args=[[<id>]])
+   odoo_execute(model="account.analytic.line", method="unlink", ids=[<id>])
    ```
 4. Confirm: `"Deleted timesheet entry (ID [id])."`
 

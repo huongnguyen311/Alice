@@ -27,6 +27,12 @@ mcp_scope: global
 
 Use `odoo_search`, `odoo_create`, `odoo_write`, `odoo_get` directly. The Odoo MCP is configured globally and available in every session.
 
+**MCP parameter rules** — the tool schema is source of truth; do NOT use Odoo XML-RPC conventions in MCP calls:
+- `odoo_get` takes `ids=[<int>, ...]` (array), never `id=<int>` (singular)
+- `odoo_execute` takes `ids=[...]` and optional `kwargs={}` — there is no `args` parameter; method positional args do not pass through
+- `odoo_fields` takes only `model` — no `fields=` filter
+- All `domain`, `fields`, `ids` values must be native JSON arrays, never stringified
+
 ### How to delegate to alice-odoo-cache
 
 Whenever this skill says "delegate to the alice-odoo-cache skill" (projects, stages, users, employees, field schemas), **invoke it via the Skill tool** — do NOT read the cache skill file with the Read tool.

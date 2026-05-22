@@ -30,6 +30,15 @@ For field changes (stage, deadline, assignee) → use `skills/alice-odoo/alice-o
 
 ---
 
+## MCP Parameter Rules
+
+The Odoo MCP tool schema is source of truth — do NOT use Odoo XML-RPC conventions in MCP calls:
+- `odoo_get` takes `ids=[<int>, ...]` (array), never `id=<int>` (singular)
+- `odoo_write` takes `ids=[...]` and `values={}`
+- All `domain`, `fields`, `ids` values must be native JSON arrays, never stringified
+
+---
+
 ## The Grep-Friendly Template
 
 The `description` field in Odoo is **HTML** — always write HTML, not raw markdown.
@@ -124,7 +133,7 @@ If `.alice/project.md` doesn't exist or the user already gave a task ID, skip th
 1. Find the task — `odoo_search` by name (filtered by `project_id` from the binding above, if present), or use known task ID
 2. Read current description:
    ```
-   odoo_get(model="project.task", id=<task_id>, fields=["name", "description"])
+   odoo_get(model="project.task", ids=[<task_id>], fields=["name", "description"])
    ```
 3. Decide: append or overwrite (see rule above)
 4. Format new content using the template

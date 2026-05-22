@@ -248,17 +248,45 @@ Write to `employees.json` as `{"employees": [...]}`. **Then update `cache_manife
 
 ### fields_schemas (`odoo_fields` output) — exact match only
 
-**Full refresh query (per model):**
+Field-schema lookups do NOT use the generic escalation ladder (Steps 1–6) because schemas are keyed exactly by model name — no fuzzy matching, no "single-record search" fallback. Use this procedure instead.
+
+**Invocation:** `Skill(skill="alice-odoo-cache", args="check fields for model '<model_name>'")`
+
+**Cached shape** (one entry per cached model, verified against `odoo_fields(model="account.analytic.line")`):
+```json
+{
+  "account.analytic.line": {
+    "name":    {"required": true,  "string": "Description", "type": "char"},
+    "date":    {"required": true,  "string": "Date",        "type": "date"},
+    "task_id": {"required": false, "string": "Task",        "type": "many2one"},
+    "...":     "..."
+  }
+}
 ```
-odoo_fields(model="<model_name>", fields=[<list of field names you care about>])
-```
-Or call without `fields=` to get the entire schema (heavier but complete).
+Each model maps to the full `odoo_fields` response — a flat dict keyed by field name with `string`, `type`, `required`, and sometimes `help`. **Note:** `odoo_fields` does NOT return allowed values for `selection`-type fields; if a caller needs those, query a sample record or use `odoo_execute`.
 
-Write under key `"<model_name>"` in `fields_schemas.json`. **Then update `cache_manifest.json.fields_schemas` (Step 2c)** — `last_updated = now`, `ttl_seconds = 31536000`, and ensure `<model_name>` is in the `models` list.
+**Step 1 — Cache freshness check (per-model)**
+- Read `cache_manifest.json` and `fields_schemas.json`.
+- **Self-heal:** if `fields_schemas.json` contains `<model_name>` but the manifest's `fields_schemas.models` list does not, re-derive the manifest entry (`last_updated = file mtime`, `ttl_seconds = 31536000`, add `<model_name>` to `models`) and atomic-write the manifest. Continue below.
+- **Treat as stale (go to Step 2) if ANY of these hold:**
+  - `fields_schemas.json` does not exist
+  - `fields_schemas.json` has no key for `<model_name>`
+  - `cache_manifest.json.fields_schemas.last_updated + ttl_seconds <= now`
+- Otherwise → Step 3.
 
-**No fuzzy match** — field names are copied from docs / introspection, exact match only. If a requested field is missing, fall through to live `odoo_fields` (Step 5).
+**Step 2 — Refresh from Odoo**
+a. Query: `odoo_fields(model="<model_name>")`. The MCP tool takes only `model` — there is no `fields=` parameter; it always returns the full schema.
+b. Load existing `fields_schemas.json` (or start with `{}`), set `schemas["<model_name>"] = <response>`, atomic-write.
+c. Update `cache_manifest.json.fields_schemas` — set `last_updated = now` (ISO 8601 UTC), `ttl_seconds = 31536000`, ensure `<model_name>` is in `models`. Atomic-write the manifest.
+d. Continue to Step 3.
 
-**Recommended models to seed:**
+**Step 3 — Return**
+- Return `schemas["<model_name>"]` to the caller.
+- If the caller asked about a specific field that's missing from the cached schema, that's a genuine "field doesn't exist on this model" — report it as such, do NOT re-query. `odoo_fields` returns the exhaustive schema; a missing field in fresh data means it isn't defined.
+
+**No fuzzy match** — exact model-name key only.
+
+**Recommended models to seed (lazy, on first lookup — do NOT pre-warm):**
 - `account.analytic.line` (timesheet)
 - `project.task`
 - `project.project`
