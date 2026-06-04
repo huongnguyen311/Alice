@@ -44,16 +44,20 @@ Token được cấp & làm mới qua **easy-auth gateway** (token broker — ga
 
 ### Pre-flight refresh — luôn chạy TRƯỚC khi build service
 
-Mỗi script CRUD phải gọi `refresh_via_gateway()` trước khi đọc token. Nó chỉ gọi mạng khi token sắp hết hạn (rẻ); nếu gateway báo `reauthorize` thì in hướng dẫn chạy lại consent.
+Mỗi script CRUD phải gọi `refresh_via_gateway()` trước khi đọc token. Nó chỉ gọi mạng khi token sắp hết hạn (rẻ). Hai trường hợp lỗi cần bắt:
+- `reauthorize` (refresh_token chết / hết hạn — ví dụ Testing mode 7 ngày) → in hướng dẫn chạy lại consent, `exit 2`.
+- `retry` (lỗi tạm thời 502/429, refresh_token vẫn còn hạn — đã tự retry với backoff bên trong) → in cảnh báo, `exit 3`, thử lại sau.
 
 ```python
 import sys
 sys.path.insert(0, "{ALICE_ROOT}/setup")
-from gateway_tokens import refresh_via_gateway, ReauthorizeRequired
+from gateway_tokens import refresh_via_gateway, ReauthorizeRequired, TransientRefreshError
 try:
     refresh_via_gateway()          # no-op nếu token còn hạn
 except ReauthorizeRequired as e:
     print(e); sys.exit(2)          # → chạy setup/google_gateway_auth.py
+except TransientRefreshError as e:
+    print(e); sys.exit(3)          # → lỗi tạm thời, thử lại sau (token còn hạn)
 ```
 
 > **MCP đã gỡ bỏ:** Google Sheets giờ **chỉ chạy qua Python skill này** (không còn `mcp-google-sheets` / `mcp__google-workspace__*`). Gateway chỉ lo auth/token, mọi API call do skill này thực hiện.
@@ -95,11 +99,13 @@ SCOPES = [
 
 # Pre-flight: refresh qua gateway nếu token sắp hết hạn (no-op nếu còn hạn).
 sys.path.insert(0, str(ALICE_ROOT / "setup"))
-from gateway_tokens import refresh_via_gateway, ReauthorizeRequired
+from gateway_tokens import refresh_via_gateway, ReauthorizeRequired, TransientRefreshError
 try:
     refresh_via_gateway()
 except ReauthorizeRequired as e:
     print(e); sys.exit(2)
+except TransientRefreshError as e:
+    print(e); sys.exit(3)
 
 creds = Credentials.from_authorized_user_file(
     str(ALICE_ROOT / "credentials/google_token.json"), SCOPES
@@ -129,11 +135,13 @@ SCOPES = [
 ]
 
 sys.path.insert(0, str(ALICE_ROOT / "setup"))
-from gateway_tokens import refresh_via_gateway, ReauthorizeRequired
+from gateway_tokens import refresh_via_gateway, ReauthorizeRequired, TransientRefreshError
 try:
     refresh_via_gateway()
 except ReauthorizeRequired as e:
     print(e); sys.exit(2)
+except TransientRefreshError as e:
+    print(e); sys.exit(3)
 
 creds = Credentials.from_authorized_user_file(
     str(ALICE_ROOT / "credentials/google_token.json"), SCOPES
