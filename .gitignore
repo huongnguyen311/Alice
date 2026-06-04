@@ -1,5 +1,7 @@
 # Credentials & secrets — never commit these
 credentials/*
+# ...except committed example templates (real values live in the un-suffixed file)
+!credentials/*.example
 
 # Runtime data — logs, outputs, tokens
 data/

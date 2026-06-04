@@ -34,9 +34,29 @@ Thao tác đầy đủ CRUD với Google Sheets qua Python script, dùng credent
 | Item | Path |
 |---|---|
 | Token | `{ALICE_ROOT}/credentials/google_token.json` |
-| Scopes | `gmail.modify` + `calendar` + `spreadsheets` + `drive.readonly` |
+| Scopes | `spreadsheets` + `drive.readonly` (cấp qua gateway consent) |
+| Gate config | `{ALICE_ROOT}/credentials/gateway-config.json` |
 
-Nếu token chưa có hoặc hết hạn → chạy: `{ALICE_ROOT}/.venv/bin/python {ALICE_ROOT}/setup/google_auth_setup.py`
+Token được cấp & làm mới qua **easy-auth gateway** (token broker — gateway giữ Google `client_secret`, máy này không có).
+
+- **Chưa có token / lần đầu** → cách dễ nhất: bảo Alice **"connect my google"** (skill `alice-google-connect`, một click qua MCP `google-auth`). Hoặc chạy thủ công: `{ALICE_ROOT}/.venv/bin/python {ALICE_ROOT}/setup/google_gateway_auth.py`
+- **Token hết hạn** → KHÔNG tự refresh được bằng google-auth (không có Google `client_secret`). Phải refresh qua gateway. Mọi snippet bên dưới đã có bước **pre-flight refresh** lo việc này tự động.
+
+### Pre-flight refresh — luôn chạy TRƯỚC khi build service
+
+Mỗi script CRUD phải gọi `refresh_via_gateway()` trước khi đọc token. Nó chỉ gọi mạng khi token sắp hết hạn (rẻ); nếu gateway báo `reauthorize` thì in hướng dẫn chạy lại consent.
+
+```python
+import sys
+sys.path.insert(0, "{ALICE_ROOT}/setup")
+from gateway_tokens import refresh_via_gateway, ReauthorizeRequired
+try:
+    refresh_via_gateway()          # no-op nếu token còn hạn
+except ReauthorizeRequired as e:
+    print(e); sys.exit(2)          # → chạy setup/google_gateway_auth.py
+```
+
+> **MCP đã gỡ bỏ:** Google Sheets giờ **chỉ chạy qua Python skill này** (không còn `mcp-google-sheets` / `mcp__google-workspace__*`). Gateway chỉ lo auth/token, mọi API call do skill này thực hiện.
 
 ---
 
@@ -57,8 +77,10 @@ Với mọi thao tác CRUD, **luôn hỏi user chọn mode** trước khi chạy
 
 ## Boilerplate — init cho CLI
 
+> Mọi snippet bên dưới dùng chung phần init này. Luôn bắt đầu bằng pre-flight refresh.
+
 ```python
-import warnings
+import warnings, sys
 warnings.filterwarnings("ignore")
 
 from pathlib import Path
@@ -67,11 +89,17 @@ from googleapiclient.discovery import build
 
 ALICE_ROOT = Path("{ALICE_ROOT}")
 SCOPES = [
-    "https://www.googleapis.com/auth/gmail.modify",
-    "https://www.googleapis.com/auth/calendar",
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive.readonly",
 ]
+
+# Pre-flight: refresh qua gateway nếu token sắp hết hạn (no-op nếu còn hạn).
+sys.path.insert(0, str(ALICE_ROOT / "setup"))
+from gateway_tokens import refresh_via_gateway, ReauthorizeRequired
+try:
+    refresh_via_gateway()
+except ReauthorizeRequired as e:
+    print(e); sys.exit(2)
 
 creds = Credentials.from_authorized_user_file(
     str(ALICE_ROOT / "credentials/google_token.json"), SCOPES
@@ -87,7 +115,7 @@ sheet = service.spreadsheets()
 Khi user hỏi "list sheet", "danh sách sheet", "các sheet của tôi":
 
 ```python
-import warnings
+import warnings, sys
 warnings.filterwarnings("ignore")
 
 from pathlib import Path
@@ -96,11 +124,16 @@ from googleapiclient.discovery import build
 
 ALICE_ROOT = Path("{ALICE_ROOT}")
 SCOPES = [
-    "https://www.googleapis.com/auth/gmail.modify",
-    "https://www.googleapis.com/auth/calendar",
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive.readonly",
 ]
+
+sys.path.insert(0, str(ALICE_ROOT / "setup"))
+from gateway_tokens import refresh_via_gateway, ReauthorizeRequired
+try:
+    refresh_via_gateway()
+except ReauthorizeRequired as e:
+    print(e); sys.exit(2)
 
 creds = Credentials.from_authorized_user_file(
     str(ALICE_ROOT / "credentials/google_token.json"), SCOPES
@@ -455,5 +488,7 @@ print(f"Rows with data: {count}")
 ## Venv & Dependencies
 
 ```bash
-{ALICE_ROOT}/.venv/bin/pip install google-auth google-auth-oauthlib google-auth-httplib2 google-api-python-client
+{ALICE_ROOT}/.venv/bin/pip install google-auth google-auth-httplib2 google-api-python-client requests
 ```
+
+> `requests` lo việc gọi gateway refresh; `google-auth-oauthlib` không còn cần cho Sheets (gateway thay thế desktop OAuth flow).
