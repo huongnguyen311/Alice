@@ -18,6 +18,7 @@ Used by:
 import importlib.util
 import json
 import sys
+import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -41,7 +42,26 @@ _GATEWAY_SENTINEL = "GATEWAY_BROKERED__refresh_via_gateway"
 
 
 class ReauthorizeRequired(Exception):
-    """Raised when the gateway says the connection is lost and consent must be redone."""
+    """Raised when the gateway says the connection is lost and consent must be redone.
+
+    Maps to the gateway's `action: "reauthorize"` (403 token_disposed /
+    401 refresh_token_expired). The stored refresh_token is dead — drop it and
+    re-run setup/google_gateway_auth.py.
+    """
+
+
+class TransientRefreshError(RuntimeError):
+    """Raised when /refresh fails transiently and retries are exhausted.
+
+    Maps to the gateway's `action: "retry"` (502 refresh_failed / 429
+    rate_limited). The refresh_token is **still valid** — keep it and try later.
+    """
+
+
+# How many times to retry an `action: "retry"` response before giving up.
+_RETRY_ATTEMPTS = 3
+# Base seconds for exponential backoff (1s, 2s, 4s, ...).
+_RETRY_BACKOFF_BASE = 1.0
 
 
 def load_gateway_config() -> dict:
@@ -168,19 +188,17 @@ def _is_expired() -> bool:
     return datetime.now(timezone.utc) >= (expiry_dt - timedelta(seconds=60))
 
 
-def refresh_via_gateway(force: bool = False) -> bool:
-    """Exchange the stored refresh_token for a fresh access_token via POST /refresh,
-    then re-write the token file.
+def _post_refresh_once(cfg: dict, refresh_token: str) -> bool:
+    """One POST /refresh round-trip. Re-writes the token file on success.
 
-    Returns True if a refresh happened, False if the token was still valid.
-    Raises ReauthorizeRequired if the gateway says the connection is lost.
+    Returns True on success. Branches on the gateway's `action` field
+    (see google-gateway-INTEGRATION.md error table):
+      - action "reauthorize" (403 token_disposed / 401 refresh_token_expired)
+        → ReauthorizeRequired: the refresh_token is dead, drop it and re-consent.
+      - action "retry" (502 refresh_failed / 429 rate_limited)
+        → TransientRefreshError: the refresh_token is still valid, retry later.
+      - anything else (e.g. 401 unauthorized gate credential) → RuntimeError.
     """
-    if not force and not _is_expired():
-        return False
-
-    cfg = load_gateway_config()
-    refresh_token = _stored_refresh_token()
-
     resp = requests.post(
         f"{cfg['base_url'].rstrip('/')}/refresh",
         json={
@@ -210,18 +228,54 @@ def refresh_via_gateway(force: bool = False) -> bool:
         err = {}
     action = err.get("action")
     code = err.get("error", f"http_{resp.status_code}")
+    message = err.get("message", "")
 
     if action == "reauthorize":
+        # refresh_token_expired (e.g. Testing-mode 7-day expiry) or token_disposed.
         raise ReauthorizeRequired(
-            f"Gateway connection lost ({code}). Re-run:  setup/google_gateway_auth.py"
+            f"Gateway connection lost ({code}). Drop the stored token and re-run: "
+            f"setup/google_gateway_auth.py" + (f" — {message}" if message else "")
         )
-    if resp.status_code == 429:
-        raise RuntimeError("Gateway rate-limited (429). Back off and retry shortly.")
+    if action == "retry":
+        # Transient: refresh_token is still valid. Caller backs off and retries.
+        raise TransientRefreshError(
+            f"Gateway /refresh transient failure ({code})"
+            + (f": {message}" if message else "")
+        )
     if resp.status_code == 401 and code == "unauthorized":
         raise RuntimeError(
             "Bad/disabled gate credential — check credentials/gateway-config.json or contact the operator."
         )
     raise RuntimeError(f"Gateway /refresh failed ({resp.status_code}): {code}")
+
+
+def refresh_via_gateway(force: bool = False) -> bool:
+    """Exchange the stored refresh_token for a fresh access_token via POST /refresh,
+    then re-write the token file.
+
+    Returns True if a refresh happened, False if the token was still valid.
+
+    Branches on the gateway's `action` field per the integration contract:
+      - `reauthorize` → ReauthorizeRequired (refresh_token dead, re-consent).
+      - `retry` → backs off (exponential) and retries up to _RETRY_ATTEMPTS,
+        keeping the refresh_token; raises TransientRefreshError if all fail.
+    """
+    if not force and not _is_expired():
+        return False
+
+    cfg = load_gateway_config()
+    refresh_token = _stored_refresh_token()
+
+    last_exc = None
+    for attempt in range(_RETRY_ATTEMPTS):
+        try:
+            return _post_refresh_once(cfg, refresh_token)
+        except TransientRefreshError as exc:
+            last_exc = exc
+            if attempt < _RETRY_ATTEMPTS - 1:
+                time.sleep(_RETRY_BACKOFF_BASE * (2 ** attempt))
+    # Retries exhausted — surface the transient error; refresh_token stays valid.
+    raise last_exc
 
 
 if __name__ == "__main__":
@@ -232,3 +286,6 @@ if __name__ == "__main__":
     except ReauthorizeRequired as e:
         print(f"[reauthorize] {e}")
         sys.exit(2)
+    except TransientRefreshError as e:
+        print(f"[retry] {e}")
+        sys.exit(3)
