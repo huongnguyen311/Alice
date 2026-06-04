@@ -62,9 +62,10 @@ Known trigger patterns (from skill frontmatter):
 | `skills/alice-odoo/alice-odoo-timesheet.md` | odoo | "log hours", "log time", "log work", "timesheet", "add timesheet", "record hours", "track hours", "show my timesheet", "edit timesheet", "delete timesheet entry" |
 | `skills/alice-odoo/alice-odoo-cache.md` | odoo | "resolve project name", "look up odoo stage", "find odoo user", "find odoo employee", "odoo field schema", "refresh odoo cache", "reload odoo cache", "refresh odoo projects", "refresh odoo stages", "refresh odoo users", "refresh odoo employees", "refresh odoo fields", "odoo cache is stale" |
 | `skills/alice-project-bind.md` | odoo | "bind this repo to", "bind this directory to", "set odoo project for this repo", "set odoo project for this directory", "what odoo project is this repo bound to", "unbind this repo" |
-| `skills/alice-connection-check.md` | core | "connection check", "check connection", "check connections", "service status", "are services connected", "is alice connected", "check integrations", "verify connections", "ping services" |
+| `skills/alice-connection-check.md` | core | _(slash-only — invoke only via `/alice-connection-check`; no implicit triggers)_ |
 | `skills/alice-suggest-meal.md` | personal | "what should I eat", "suggest food", "what to eat", "ăn gì", "gợi ý món ăn", "hôm nay ăn gì", "đề xuất bữa ăn", "suggest a meal" |
 | `skills/Google-Sheet/skill.md` | data | "google sheet", "google sheets", "spreadsheet", "sheet", "đọc sheet", "ghi sheet", "cập nhật sheet", "thêm vào sheet", "xóa dòng", "tìm trong sheet", "mở sheet", "open sheet", "mở google sheet", "tạo sheet mới", "xóa sheet tab" |
+| `skills/alice-google-connect.md` | core | "alice connect google", "alice reconnect google", "alice connect my google", "alice link google", "alice authorize google", "alice kết nối google", "alice đăng nhập google" |
 | `skills/alice-meta/alice-init.md` | meta | "setup alice", "initialize alice", "alice setup", "configure alice", "first time setup", "init alice", "run setup" |
 | `skills/alice-git-sync.md` | automation | "sync with main", "merge main", "update from main", "pull from main", "sync my branch", "get latest changes", "bring in changes from main", "I'm behind main", "update my branch" |
 

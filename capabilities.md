@@ -46,9 +46,10 @@ This is Alice's **master routing index**. Scan this file first to identify which
 | Log, view, edit, or delete Odoo timesheet entries | "log hours", "log time", "timesheet", "track hours", "log work", "record time", "show my timesheet", "edit timesheet" | `skills/alice-odoo/alice-odoo-timesheet.md` |
 | Local cache for Odoo projects/stages/users/employees/fields — fuzzy match + force-refresh | "resolve project name", "look up odoo stage", "find odoo user", "find odoo employee", "refresh odoo cache", "refresh odoo projects", "odoo cache is stale" | `skills/alice-odoo/alice-odoo-cache.md` |
 | Bind the current working directory to an Odoo project so other Alice skills skip 'which project?' prompts | "bind this repo to", "set odoo project for this directory", "what odoo project is this repo bound to", "unbind this repo" | `skills/alice-project-bind.md` |
-| Check connectivity of Alice's services and MCP tools | "connection check", "check connection", "service status", "are services connected", "is alice connected" | `skills/alice-connection-check.md` |
+| Check connectivity of Alice's services and MCP tools | _slash-only — invoke via_ `/alice-connection-check` | `skills/alice-connection-check.md` |
 | Suggest what to eat — Vietnamese-focused meal suggestions | "what to eat", "suggest food", "ăn gì", "gợi ý món ăn", "suggest a meal", "hôm nay ăn gì" | `skills/alice-suggest-meal.md` |
 | Read, write, update, delete, search, open Google Sheets | "google sheet", "spreadsheet", "sheet", "đọc sheet", "ghi sheet", "cập nhật sheet", "thêm vào sheet", "xóa dòng", "tìm trong sheet", "mở sheet", "open sheet" | `skills/Google-Sheet/skill.md` |
+| Connect/reconnect Google (Sheets/Docs) via gateway — one-click, no paste (Alice-local) | "alice connect google", "alice reconnect google", "alice connect my google", "alice link google", "alice authorize google", "alice kết nối google", "alice đăng nhập google" | `skills/alice-google-connect.md` |
 | Interactive first-time Alice setup — collect identity, write configs, copy memory templates | "setup alice", "initialize alice", "configure alice", "alice setup", "first time setup", "init alice" | `skills/alice-meta/alice-init.md` |
 | Install Alice skills globally | "install alice", "install alice skills", "make alice skills global" | `skills/alice-meta/alice-install.md` |
 | Uninstall Alice global skills | "uninstall alice", "uninstall alice skills", "remove alice skills" | `skills/alice-meta/alice-uninstall.md` |
@@ -68,7 +69,8 @@ This is Alice's **master routing index**. Scan this file first to identify which
 | Email / Gmail | "email", "inbox", "message", "gmail", "draft", "thread" | `mcp__claude_ai_Gmail__` | `google-api-python-client` + `credentials/google_token.json` | Single read/search/draft | Batch, loop, summarise many |
 | Calendar | "calendar", "meeting", "event", "schedule", "availability", "slot" | `mcp__claude_ai_Google_Calendar__` | `google-api-python-client` + `credentials/google_token.json` | Single event create/read | Multi-event, availability scan |
 | Design / Canva | "design", "canva", "poster", "visual", "banner", "image" | `mcp__claude_ai_Canva__` | Canva REST API + `credentials/canva_api_key.txt` | Interactive design work | Batch design operations |
-| Google Sheets | "sheet", "google sheet", "spreadsheet" | — | `google-api-python-client` + `credentials/google_token.json` | Never — use Python skill | Always — see `skills/Google-Sheet/skill.md` |
+| Google Sheets | "sheet", "google sheet", "spreadsheet" | — (Sheets work has no MCP) | `google-api-python-client` + `credentials/google_token.json` (token minted/refreshed via easy-auth gateway) | No MCP for Sheets work — removed | Always — `skills/Google-Sheet/skill.md` (auto-refreshes via gateway pre-flight) |
+| Google auth/connect (gateway) | "connect google", "reconnect google", "authorize google" | `mcp__google-auth__` (project-scoped, auth-only) | `setup/google_gateway_auth.py` (manual) | One-click connect: `connect_google` / `google_auth_status` — via `skills/alice-google-connect.md` | Headless/manual token mint |
 | Local data | "csv", "log", "output", "data file" | — | `pathlib`, `csv`, `json` (built-in) | Never — no MCP for local files | Always |
 | Python scripts | "run", "execute", "auto-script" | — | `subprocess` or FastAPI `/run/` | Never | Always |
 | Odoo ERP | "task", "project", "odoo", "erp", "stage", "crm" | `mcp__odoo__` | No Python equivalent — use MCP directly | Single record operations | Batch exports via Odoo REST API |
@@ -97,4 +99,4 @@ When Alice creates a new skill, memory file, or uses a new MCP:
 - Skill paths always include the `skills/` prefix — `skills/alice-foo.md` (flat) or `skills/alice-bar/alice-bar-baz.md` (grouped). Grouping is allowed for clusters of ≥3 related skills; see the "Naming convention" sub-block in `CLAUDE.md` for the full rule (group directories must use the `alice-` prefix).
 
 ---
-*Last updated: 2026-05-22 (alice-project-bind skill added — per-repo `.alice/project.md` binding so Odoo skills auto-resolve the current project)*
+*Last updated: 2026-06-04 (Google Sheets on easy-auth gateway, Python-only; added project-scoped auth-only `google-auth` MCP + `alice-google-connect` skill for one-click connect)*

@@ -109,9 +109,18 @@ python auto-scripts/install.py
 ```
 This bakes your personal config into the installed skill copies at `~/.claude/skills/`.
 
-**4. (Optional) Google API access** — for Gmail and Calendar Python scripts:
-```bash
-python setup/google_auth_setup.py
-```
+**4. (Optional) Google API access**
+
+- **Gmail & Calendar** Python scripts (desktop OAuth):
+  ```bash
+  python setup/google_auth_setup.py
+  ```
+- **Google Sheets** (easy-auth gateway — no local Google `client_secret`):
+  ```bash
+  cp credentials/gateway-config.json.example credentials/gateway-config.json   # fill in gate creds
+  ```
+  Then just tell Alice **"connect my google"** — a one-click consent (no copy-paste) via
+  the project-scoped `google-auth` MCP. Manual fallback: `python setup/google_gateway_auth.py`.
+  See `setup/google-sheets-setup.md`.
 
 > Full platform-specific guide: `setup/SETUP-MAC.md` or `setup/SETUP-WINDOWS.md`

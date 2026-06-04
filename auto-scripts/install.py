@@ -409,21 +409,40 @@ def _install_skill(skill: dict, personal: dict, installed_at: str) -> dict:
 GLOBAL_CLAUDE_JSON = Path.home() / ".claude.json"
 
 
+# MCP servers that must stay PROJECT-SCOPED — declared in .mcp.json (so Claude Code
+# loads them inside Alice) but NOT synced to ~/.claude.json (so they don't appear in
+# other projects). e.g. the auth-only google-auth MCP only makes sense within Alice.
+PROJECT_LOCAL_MCPS = {"google-auth"}
+
+# MCP servers Alice once synced globally but has since retired — pruned from
+# ~/.claude.json on install so stale entries don't try to launch removed servers.
+RETIRED_GLOBAL_MCPS = {"google-workspace"}
+
+
 def sync_global_mcp() -> None:
-    """Merge Alice's .mcp.json servers into ~/.claude.json as global MCPs."""
+    """Merge Alice's .mcp.json servers into ~/.claude.json as global MCPs.
+
+    Servers listed in PROJECT_LOCAL_MCPS are skipped — they remain project-scoped.
+    """
     mcp_source = ALICE_ROOT / ".mcp.json"
     if not mcp_source.exists():
         print("  [SKIPPED]          .mcp.json not found — skipping global MCP sync")
         return
 
     alice_mcps = json.loads(mcp_source.read_text(encoding="utf-8")).get("mcpServers", {})
+    alice_mcps = {n: c for n, c in alice_mcps.items() if n not in PROJECT_LOCAL_MCPS}
     if not alice_mcps:
-        print("  [SKIPPED]          No MCP servers in .mcp.json")
+        print("  [SKIPPED]          No global MCP servers in .mcp.json")
         return
 
     # Load existing ~/.claude.json (may have many other keys — preserve them all)
     claude_json = json.loads(GLOBAL_CLAUDE_JSON.read_text(encoding="utf-8")) if GLOBAL_CLAUDE_JSON.exists() else {}
     existing = claude_json.get("mcpServers", {})
+
+    # Prune retired + now-project-local servers from the global config.
+    pruned = [n for n in (RETIRED_GLOBAL_MCPS | PROJECT_LOCAL_MCPS) if n in existing]
+    for name in pruned:
+        del existing[name]
 
     added, updated = [], []
     for name, cfg in alice_mcps.items():
@@ -436,11 +455,13 @@ def sync_global_mcp() -> None:
     claude_json["mcpServers"] = existing
     GLOBAL_CLAUDE_JSON.write_text(json.dumps(claude_json, indent=2) + "\n", encoding="utf-8")
 
+    for name in pruned:
+        print(f"  [OK]               MCP '{name}' pruned from ~/.claude.json (retired/project-local)")
     for name in added:
         print(f"  [OK]               MCP '{name}' added to ~/.claude.json (global)")
     for name in updated:
         print(f"  [OK]               MCP '{name}' updated in ~/.claude.json (global)")
-    if not added and not updated:
+    if not added and not updated and not pruned:
         print(f"  [OK]               Global MCP already up to date")
 
 

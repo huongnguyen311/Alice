@@ -121,7 +121,7 @@
       "file": "Google-Sheet/skill.md",
       "type": "python",
       "mcp_required": null,
-      "warning": null,
+      "warning": "Uses google-api-python-client + credentials/google_token.json (minted/refreshed via the easy-auth gateway — setup/google_gateway_auth.py). Paths rewritten to absolute on install.",
       "enabled": true
     }
   ]

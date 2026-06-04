@@ -44,6 +44,26 @@ This file documents all MCP (Model Context Protocol) servers and tools available
 - **Python equivalent:** Canva REST API via `requests` with API key stored in `credentials/canva_api_key.txt`
 - **Notes:** Not yet used by any Alice skill. Python scripts cannot connect to this MCP directly — requires separate Canva API key setup.
 
+### Google Workspace (Sheets / Docs)
+- **Status:** active — **no MCP server** (Python-only)
+- **MCP type:** None. The former `mcp-google-sheets` MCP has been **removed**; all Sheets/Docs work runs through the Python skill.
+- **Purpose:** Read/write/append/update/delete/search Google Sheets
+- **Auth:** **Easy-auth gateway** (token broker) — the gateway holds Google's `client_secret` server-side; Alice holds a gate credential (`clientId`/`clientSecret`) + a per-user `refresh_token`. Tokens cannot self-refresh against Google; refresh routes through the gateway.
+- **Skill:** `skills/Google-Sheet/skill.md` (google-api-python-client, with a pre-flight gateway refresh)
+- **Setup:** `setup/google_gateway_auth.py` (one-time consent) → writes `credentials/google_token.json`. Gate creds in `credentials/gateway-config.json`. Refresh helper: `setup/gateway_tokens.py`.
+- **Setup guide:** `setup/google-sheets-setup.md` · **Protocol:** `setup/google-gateway-INTEGRATION.md`
+- **Notes:** Gateway grants `spreadsheets` + `drive.readonly` only (no Gmail/Calendar). Gmail/Calendar Python still use the separate desktop-OAuth flow (`setup/google_auth_setup.py`).
+
+### Google Auth (gateway) — auth-only
+- **Status:** active
+- **MCP type:** Local **stdio**, **project-scoped** — declared in `.mcp.json`, loaded by Claude Code **only inside the Alice project**. NOT synced to `~/.claude.json` (excluded by `PROJECT_LOCAL_MCPS` in `install.py`).
+- **Server:** `mcp/google_auth_mcp.py` (Python, `mcp[cli]` / FastMCP), launched via the project venv.
+- **Purpose:** One-click connect/reconnect to Google (Sheets/Docs) via the easy-auth gateway — **auth only, no API calls**. Removes the copy-paste from the setup flow.
+- **Key tools:** `mcp__google-auth__connect_google` (one-click localhost auto-capture), `mcp__google-auth__google_auth_status` (read-only health), `mcp__google-auth__finish_google_connect` (paste fallback).
+- **Writes:** `credentials/google_token.json` (then consumed by `skills/Google-Sheet/skill.md`). Reuses `setup/gateway_tokens.py` for token I/O.
+- **Needs:** `credentials/gateway-config.json` (gate credential). One-click capture also needs the gateway to honor a `localhost` redirect_uri (see `setup/google-gateway-INTEGRATION.md`).
+- **Skill:** `skills/alice-google-connect.md` (Alice-local). **Notes:** auth-only by design — never calls Sheets/Docs APIs.
+
 ### Odoo ERP (Self-Hosted)
 - **Status:** active
 - **MCP type:** Remote SSE — self-hosted at `https://erp.inapps.net/mcp/`
@@ -65,4 +85,4 @@ This file documents all MCP (Model Context Protocol) servers and tools available
 - See `skills/mcp-or-script.md` for the full decision framework on when to use MCP vs. Python script.
 
 ---
-*Last updated: 2026-04-07*
+*Last updated: 2026-06-04 (Google Sheets migrated to easy-auth gateway; mcp-google-sheets removed; added project-scoped auth-only `google-auth` MCP for one-click connect)*
