@@ -49,14 +49,23 @@ Ask **all** missing required fields in **one message** — never one at a time.
 
 | Action | Required | Optional | Ask if required missing |
 |---|---|---|---|
-| Create task | Task title, project name | Assignee, deadline | "What should I name the task, and which project does it belong to?" |
+| Create task | Task title, project name | Assignee, deadline, description, star/priority | "What should I name the task, and which project does it belong to?" |
 | Create task | — | Assignee | "Who should I assign it to? (skip if unassigned is fine)" |
 | Create task | — | Deadline | "Any deadline for this task?" |
+| Create task | — | Description | "Any description for this task?" |
+| Create task | — | Star (priority) | "Should this task be starred/high priority? (yes/no, default: no)" |
 | Change stage | Target stage, project name | — | "Which stage should I move it to? I'll check what stages are available in that project." |
 | Update description | Task identity | — | "Which task — by name, or tell me which project it's in?" |
 | Find tasks | Project name | — | "Which project should I search in?" |
 
 **Rule:** Batch all missing-field questions into a single message. Never ask field by field.
+
+**Create task — always ask for these optional fields** if not already provided by the user:
+- Description: "Any description for this task? (or skip)"
+- Star: "Should this task be starred (high priority)? (yes / no)"
+- Assign for: "Who should this task be assigned to? (or skip to leave unassigned)"
+
+Ask all three in a single follow-up message if none were mentioned.
 
 ---
 
@@ -150,22 +159,29 @@ Re-run from Step 1 with the refined input.
 ## Create a Task
 
 1. Validate required fields (task title + project name). Ask if missing.
-2. Resolve project using the **Resolve Project Name** algorithm above to get `project_id`.
-3. If assignee given, resolve user ID:
+2. If description, star (priority), or assignee were **not** provided, ask for all three in one message:
+   > "A few quick questions before I create the task:
+   > - Any description? (or skip)
+   > - Should it be starred / high priority? (yes / no)
+   > - Who should it be assigned to? (or skip to leave unassigned)"
+3. Resolve project using the **Resolve Project Name** algorithm above to get `project_id`.
+4. If assignee given, resolve user ID:
    ```
-   odoo_search(model="res.users", domain=[("name", "ilike", "<assignee name>")], fields=["id", "name"])
+   odoo_search(model="res.users", domain=[["name", "ilike", "<assignee name>"]], fields=["id", "name"])
    ```
-4. Create the task:
+5. Create the task:
    ```
    odoo_create(model="project.task", values={
      "name": "<task title>",
      "project_id": <project_id>,
-     "user_ids": [<user_id>],          # optional
+     "description": "<description>",   # optional — plain text or HTML
+     "user_ids": [[6, 0, [<user_id>]]],  # optional — use ORM many2many syntax
      "date_deadline": "YYYY-MM-DD",    # optional
-     "priority": "0"                   # "0" = normal, "1" = high
+     "priority": "1"                   # "0" = normal, "1" = high/starred
    })
    ```
-5. Confirm: "Task '[name]' created in [project] (ID: [id])."
+6. Confirm: "Task '[name]' created in [project] (ID: [id])."
+   Include a summary line for each field that was set (description snippet, assignee name, star status).
 
 ---
 

@@ -100,8 +100,8 @@
       "enabled": true
     },
     {
-      "name": "alice-write-tcs",
-      "file": "alice-write-tcs.md",
+      "name": "alice-user-flow",
+      "file": "alice-user-flow.md",
       "type": "mcp",
       "mcp_required": null,
       "warning": null,

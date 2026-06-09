@@ -53,7 +53,14 @@ This is Alice's **master routing index**. Scan this file first to identify which
 | Global wrapper: build Alice automation script from any project (`/alice-build-script`) | (same as build-script) | `skills/alice-build-script.md` |
 | Global wrapper: run/schedule Alice automation from any project (`/alice-run-automation`) | (same as run-automation) | `skills/alice-run-automation.md` |
 | Expand a brief scope into a structured specification document | "write scope detail", "expand scope", "scope detail", "scope specification", "detail this scope" | `skills/alice-scope-detail.md` |
+| Write Gherkin Acceptance Criteria for features | "write acceptance criteria", "write AC", "generate AC", "acceptance criteria", "write gherkin", "gherkin scenarios" | `skills/alice-acceptance-criteria.md` |
 | Run Playwright web automation tests from TC Markdown files against a live URL | "run tests on", "web test", "execute test cases", "test website", "web automation", "run automated tests" | `skills/alice-web-executor.md` |
+| Create WBS, sprint timeline, task allocation, and project folder structure from product scope | "work breakdown", "WBS", "sprint plan", "sprint timeline", "task allocation", "project planning", "agile planning" | `skills/alice-work-breakdown.md` |
+| Generate Token Studio-compatible design tokens (4-layer: global/light/dark/component) | "generate design tokens", "create token set", "design system tokens", "token studio", "figma tokens" | `skills/design-tokens.md` |
+| Create a complete typography system — font pairing, type scale, usage rules, Token Studio JSON | "typography system", "type scale", "font pairing", "design typography", "typography tokens" | `skills/typography-system.md` |
+| Write structured microcopy for UI — button labels, errors, empty states, dialogs, placeholders, tooltips, loading states | "write microcopy", "ux copy", "ux writing", "button labels", "error message copy", "empty state copy", "confirmation dialog copy", "placeholder text", "tooltip copy", "loading state copy", "onboarding hints", "microcopy" | `skills/ux-writing.md` |
+| Define animation specs for UI components — duration tokens, easing curves, keyframes, platform notes, reduced-motion fallback | "animation spec", "motion spec", "animate a component", "easing", "entrance animation", "exit animation", "transition duration", "reduced motion", "motion design" | `skills/motion-design.md` |
+| Write Figma developer handoff specs — Auto Layout, layer hierarchy, constraints, token references, states, platform flags | "figma spec", "figma handoff", "developer handoff", "component spec", "auto layout spec", "layer structure", "token references", "design spec", "handoff documentation" | `skills/figma-specs.md` |
 
 > **Rule:** Skills with matching `triggers:` frontmatter are loaded implicitly (see `skills/route-request.md` Step 3). This table is the fallback when no trigger match is found. Do not preload all skills.
 
@@ -93,4 +100,4 @@ When Alice creates a new skill, memory file, or uses a new MCP:
 - Keep descriptions short — this file must stay scannable
 
 ---
-*Last updated: 2026-04-16 (alice-scope-detail skill added)*
+*Last updated: 2026-04-22 (alice-work-breakdown skill added)*

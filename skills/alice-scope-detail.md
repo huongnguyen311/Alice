@@ -1,6 +1,6 @@
 ---
 name: alice-scope-detail
-description: Expand a brief primary scope into a structured specification document via Alice — covering short description, user flow, system behavior, error cases, constraints, and acceptance criteria without adding assumptions.
+description: Expand a brief primary scope into a structured specification document via Alice — covering scope detail, Gherkin acceptance criteria, and assumptions.
 scope: meta
 triggers:
   - "write scope detail"
@@ -14,149 +14,127 @@ triggers:
 
 # Skill: Scope Detail Writer
 
-Transforms a brief primary scope into a structured specification document. Expands content to be clear, structured, and detailed — without assuming, inventing, or adding features not mentioned in the original scope.
+You are a Senior Product Manager and Business Analyst with strong experience in writing clear, testable requirements for software teams.
 
-## Rules
+Transforms analyzed requirements, user flows, or feature descriptions into detailed Scope documents with Gherkin Acceptance Criteria.
 
-- Base strictly on the provided primary scope
-- Do NOT assume, invent, or add features not in the scope
-- Stay aligned with the original intent and boundaries
-- Every section derives only from what is explicitly or clearly implicitly stated
+---
 
-## Input
+## Step 1 — Input
 
 Ask for (or accept inline):
-- **Primary scope**: The feature description to expand
+- **Source material**: Analyzed requirements, user flows, or a feature description
 
-If not provided, ask: *"Please share the primary scope you'd like me to expand."*
-
-## Output Structure
-
-Produce a markdown document with the following sections in order:
-
----
-
-### 1. Short Description
-
-What the feature does. 1–3 sentences max. Restate the core purpose without embellishment.
+Priority order for locating documents:
+1. User pastes content inline → use directly
+2. User names a feature → look for `docs/scope/<feature-slug>.md` or `docs/user-flows/<feature-slug>.md` in the project
+3. User provides a file path → read the file
+4. None provided → ask: *"Please share the requirements or feature description you'd like me to turn into a scope document."*
 
 ---
 
-### 2. User Flow
+## Step 2 — AI Analysis & Follow-up
 
-Step-by-step: what the user does → how the system responds. Format as a numbered list. Each step = one user action or system response.
+After receiving the source material:
 
-Example format:
-1. User navigates to [screen]
-2. User enters [input]
-3. System validates [condition]
-4. System displays [result]
+1. **Summarise** what was understood — feature list, actors, main behaviors, known constraints
+2. **Identify gaps** — missing information needed to write testable AC (validation rules, error states, permissions, data limits)
+3. If gaps exist: ask **at most 5 focused questions** in a single message — **do NOT proceed until the user answers**
+4. If the document is complete: **skip this step automatically** and proceed to Step 3
 
----
+⛔ **Never fill in missing information with assumptions.** Always ask the user first.
 
-### 3. System Behavior
-
-- **Validations**: Rules the system enforces (only those implied by scope)
-- **System behavior**: How the system processes or responds internally — e.g. "saves to database", "calls API", "sends notification"
-- **State changes**: What changes in the system as a result of the user action
+Questions must be specific. Do not ask "Can you clarify?" — instead ask "What should happen when a user submits a form with a duplicate email address?"
 
 ---
 
-### 4. Error Cases *(if any)*
+## Step 3 — Generate Scope Document
 
-Only include cases clearly implied by the primary scope. Omit this section entirely if no error cases apply.
+### 3.2 Scope Detail (per Feature)
 
-For each case:
-- **Condition**: When does this occur?
-- **System response**: What happens?
+For each feature, produce one block:
+
+```
+FEATURE NAME: [Name]
+
+SHORT DESCRIPTION:
+- What the feature does
+- Key functionality included
+- Important constraints or assumptions
+
+BUSINESS GOAL:
+- Why this feature exists
+- What value it delivers (to the user or business)
+
+IN-SCOPE:
+- [Bullet list of what is explicitly included]
+
+OUT-OF-SCOPE:
+- [Bullet list of what is explicitly excluded — to prevent ambiguity]
+
+USER FLOW:
+→ Use the **alice-user-flow** skill to generate user flows for this feature.
+   Pass the feature name and scope detail from sections above as input.
+   The skill handles main flows, alternative flows, UX notes, and Mermaid diagrams.
+```
+
+Rules:
+- Base strictly on the provided source — do not invent features not mentioned
+- OUT-OF-SCOPE must name adjacent behaviors that could be confused as included
+- DESCRIPTION must be specific, not generic ("allows users to X" not "handles Y functionality")
+
+**Good example:**
+> Bad: "Handles user authentication."
+> Good: "Allows registered users to sign in using email and password. Locks account after 5 failed attempts."
 
 ---
 
-### 5. Constraints
+### 3.3 Acceptance Criteria (per Feature)
 
-Respect any limitations explicitly stated in the scope. If none stated, omit this section.
+Use the **alice-acceptance-criteria** skill to generate Gherkin scenarios for each feature.
 
----
+Invoke it with the feature name and scope detail from section 3.2 as input. The skill handles clarification, scenario generation, quality checks, and saving.
 
-### 6. Acceptance Criteria
+If the **alice-acceptance-criteria** skill is unavailable, generate AC inline following the Gherkin format defined in that skill's Step 3.
 
-Defines when the feature is considered done — clear, testable bullet points organized by category.
-
-Format:
-**Happy path:**
-- ✅ User can...
-- ✅ System...
-
-**System behavior:**
-- ✅ System processes/stores/sends...
-- ✅ System prevents...
-
-**Error handling:** *(only if Section 4 has error cases)*
-- ✅ System displays [error message] when [condition]
-
-Guidelines:
-- One bullet = one clear, testable outcome
-- Use simple statements: "User can…", "System…"
-- Avoid implementation details
-- Do not include assumptions outside the given scope
-- Cover the happy path, system behavior, and all error cases listed in Section 4
+**Minimum per feature: 3 scenarios** — 1 happy path, 1 negative path, 1 edge case.
 
 ---
 
-## Execution Algorithm
+### 3.4 Assumptions
 
-1. Receive primary scope from user
-2. Read the scope carefully — identify: domain, action type, actors, implied backend
-3. Draft each section strictly from the scope — if a section has nothing to say, omit it
-4. Write Acceptance Criteria last — every item must map back to a specific point in sections 1–5
-6. Run the Quality Check below before saving
-7. Save the document (see **Output File** section below)
-8. After saving, confirm the file path to the user and ask: *"Would you like me to adjust any section or add constraints?"*
+⛔ **NEVER make assumptions silently.** If information is missing or unclear, you MUST ask the user before proceeding.
+
+If gaps remain after Step 2 follow-up questions were answered (or skipped), **stop and ask** before writing any content that depends on that missing information.
+
+Only document an assumption here if the user explicitly told you to proceed despite incomplete information:
+
+| # | Assumption | Reason |
+|---|---|---|
+| 1 | [Statement] | [What was missing — confirmed by user to assume] |
+
+If no assumptions were made, write: *"No assumptions — all behaviors derived from source material."*
+
+
+---
 
 ## Quality Check (self-run before saving)
 
-- [ ] Every statement in Short Description is in the scope
-- [ ] Every step in User Flow follows logically without gaps
-- [ ] Every system behavior listed is implied by the scope
-- [ ] Every error case is implied, not invented
-- [ ] Every acceptance criterion is testable and maps to a section above
-- [ ] Acceptance Criteria covers happy path, system behavior, and error cases
-- [ ] No section contains assumed features
-
-## Output File
-
-Save the document as a file in the current project — do NOT just print it to chat.
-
-**Location:** `docs/scope/<feature-slug>.md` relative to the current working directory (the project root Claude Code is open in).
-
-**Feature slug:** Derive from the feature name — lowercase, words separated by hyphens, no special characters. Example: "User Login with Email" → `user-login-with-email`.
-
-**Steps:**
-1. Determine the current project root (the directory Claude Code is open in)
-2. Create `docs/scope/` if it does not exist
-3. Write the full document to `docs/scope/<feature-slug>.md`
-4. If a file with that name already exists, append a numeric suffix: `<feature-slug>-2.md`
-5. If `CLAUDE.md` does not exist at the project root, create it with the content below — if it already exists, skip this step entirely (never overwrite)
-
-**`CLAUDE.md` bootstrap content (only written when file is absent):**
-```markdown
-# CLAUDE.md
-
-## Scope Documents
-
-Feature scope specifications live in `docs/scope/`.
-Each file is named `<feature-slug>.md` and was generated by the `alice-scope-detail` skill.
-
-When working on a feature, read the corresponding scope file in `docs/scope/` for the definition of done and accepted behavior.
-```
-
-**Document header:** Begin the saved file with:
-```markdown
-# <Feature Name>
-
-> Source scope: <original scope text, verbatim>
-> Generated: <YYYY-MM-DD>
+- [ ] Every feature in the source is represented in the Feature List
+- [ ] Every DESCRIPTION is specific — no generic filler
+- [ ] Every IN-SCOPE/OUT-OF-SCOPE boundary is clear and unambiguous
+- [ ] Every feature has at least 3 AC scenarios (1 happy path, 1 validation, 1 edge case)
+- [ ] Every Then clause is observable and testable — no vague outcomes
+- [ ] No AC scenario uses terms like "works properly", "loads correctly", "shows an error" without specifying the error
+- [ ] All assumptions are documented with a reason
+- [ ] No invented features — everything traces back to the source
 
 ---
-```
-Then the 6 sections follow.
+
+## Rules
+
+- Base all content strictly on the provided source documents
+- **Never make assumptions** — when information is missing or unclear, ask the user before proceeding; do not guess or fill in gaps silently
+- Acceptance Criteria must be written so any QA engineer can execute them without asking follow-up questions
+- Every feature must have at least 1 happy path, 1 validation, and 1 edge case scenario
+- OUT-OF-SCOPE is mandatory — it prevents scope creep and test confusion

@@ -64,7 +64,14 @@ Known trigger patterns (from skill frontmatter):
 | `alice-init.md` | meta | "setup alice", "initialize alice", "alice setup", "configure alice", "first time setup", "init alice", "run setup" |
 | `alice-git-sync.md` | automation | "sync with main", "merge main", "update from main", "pull from main", "sync my branch", "get latest changes", "bring in changes from main", "I'm behind main", "update my branch" |
 | `alice-scope-detail.md` | meta | "write scope detail", "expand scope", "scope detail", "scope specification", "write specification from scope", "detail this scope", "expand this feature scope" |
+| `alice-acceptance-criteria.md` | meta | "write acceptance criteria", "write AC", "generate AC", "acceptance criteria", "write gherkin", "gherkin scenarios", "write test scenarios", "AC for feature" |
 | `alice-web-executor.md` | automation | "run tests on", "execute test cases", "web automation", "run web executor", "test website", "execute TCs on", "web test", "run automated tests" |
+| `alice-work-breakdown.md` | meta | "work breakdown", "WBS", "sprint plan", "sprint timeline", "task allocation", "project timeline", "break down tasks", "sprint planning", "project planning", "create sprint", "estimate sprints", "plan sprints", "agile planning" |
+| `design-tokens.md` | design | "generate design tokens", "create design tokens", "design system tokens", "token studio", "figma tokens", "create token set", "design tokens for" |
+| `typography-system.md` | design | "typography system", "type scale", "font pairing", "design typography", "create typography", "generate type scale", "typography tokens" |
+| `ux-writing.md` | meta | "write microcopy", "ux copy", "ux writing", "button labels", "error message copy", "empty state copy", "confirmation dialog copy", "placeholder text", "tooltip copy", "loading state copy", "onboarding hints", "microcopy" |
+| `motion-design.md` | meta | "animation spec", "motion spec", "animate a component", "easing", "entrance animation", "exit animation", "transition duration", "reduced motion", "motion design" |
+| `figma-specs.md` | meta | "figma spec", "figma handoff", "developer handoff", "component spec", "auto layout spec", "layer structure", "token references", "figma specs", "design spec", "handoff documentation" |
 
 > Update this table whenever a new skill is added with `triggers:` frontmatter.
 
