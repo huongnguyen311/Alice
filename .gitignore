@@ -1,5 +1,6 @@
 # Credentials & secrets — never commit these
 credentials/
+config/google-oauth-client.json
 
 # Runtime data — logs, outputs, tokens
 data/
