@@ -52,14 +52,6 @@
       "enabled": true
     },
     {
-      "name": "alice-run-automation",
-      "file": "alice-run-automation.md",
-      "type": "python",
-      "mcp_required": null,
-      "warning": null,
-      "enabled": true
-    },
-    {
       "name": "alice-connection-check",
       "file": "alice-connection-check.md",
       "type": "python",
@@ -108,11 +100,149 @@
       "enabled": true
     },
     {
-      "name": "alice-web-executor",
-      "file": "alice-web-executor.md",
-      "type": "python",
+      "_comment": "BA/Dev skills",
+      "name": "alice-acceptance-criteria",
+      "file": "alice-acceptance-criteria.md",
+      "type": "mcp",
       "mcp_required": null,
-      "warning": "Requires ANTHROPIC_API_KEY env var and Playwright chromium installed",
+      "warning": null,
+      "enabled": true
+    },
+    {
+      "name": "alice-user-story",
+      "file": "alice-user-story.md",
+      "type": "mcp",
+      "mcp_required": null,
+      "warning": null,
+      "enabled": true
+    },
+    {
+      "name": "alice-requirement-analysis",
+      "file": "alice-requirement-analysis.md",
+      "type": "mcp",
+      "mcp_required": null,
+      "warning": null,
+      "enabled": true
+    },
+    {
+      "name": "alice-generate-prd",
+      "file": "alice-generate-prd.md",
+      "type": "mcp",
+      "mcp_required": null,
+      "warning": null,
+      "enabled": true
+    },
+    {
+      "name": "alice-test-design-engine",
+      "file": "alice-test-design-engine.md",
+      "type": "mcp",
+      "mcp_required": null,
+      "warning": null,
+      "enabled": true
+    },
+    {
+      "name": "alice-timeline",
+      "file": "alice-timeline.md",
+      "type": "mcp",
+      "mcp_required": null,
+      "warning": null,
+      "enabled": true
+    },
+    {
+      "_comment": "Design/UX skills",
+      "name": "design-tokens",
+      "file": "design-tokens.md",
+      "type": "mcp",
+      "mcp_required": null,
+      "warning": null,
+      "enabled": true
+    },
+    {
+      "name": "typography-system",
+      "file": "typography-system.md",
+      "type": "mcp",
+      "mcp_required": null,
+      "warning": null,
+      "enabled": true
+    },
+    {
+      "name": "ux-writing",
+      "file": "ux-writing.md",
+      "type": "mcp",
+      "mcp_required": null,
+      "warning": null,
+      "enabled": true
+    },
+    {
+      "name": "motion-design",
+      "file": "motion-design.md",
+      "type": "mcp",
+      "mcp_required": null,
+      "warning": null,
+      "enabled": true
+    },
+    {
+      "name": "figma-specs",
+      "file": "figma-specs.md",
+      "type": "mcp",
+      "mcp_required": null,
+      "warning": null,
+      "enabled": true
+    },
+    {
+      "name": "component-design",
+      "file": "component-design.md",
+      "type": "mcp",
+      "mcp_required": null,
+      "warning": null,
+      "enabled": true
+    },
+    {
+      "name": "design-brief-parser",
+      "file": "design-brief-parser.md",
+      "type": "mcp",
+      "mcp_required": null,
+      "warning": null,
+      "enabled": true
+    },
+    {
+      "name": "design-qa",
+      "file": "design-qa.md",
+      "type": "mcp",
+      "mcp_required": null,
+      "warning": null,
+      "enabled": true
+    },
+    {
+      "name": "design-review",
+      "file": "design-review.md",
+      "type": "mcp",
+      "mcp_required": null,
+      "warning": null,
+      "enabled": true
+    },
+    {
+      "name": "responsive-layout",
+      "file": "responsive-layout.md",
+      "type": "mcp",
+      "mcp_required": null,
+      "warning": null,
+      "enabled": true
+    },
+    {
+      "name": "user-persona",
+      "file": "user-persona.md",
+      "type": "mcp",
+      "mcp_required": null,
+      "warning": null,
+      "enabled": true
+    },
+    {
+      "name": "Alice_UX-UI-design-master",
+      "file": "Alice_UX-UI-design-master.md",
+      "type": "mcp",
+      "mcp_required": null,
+      "warning": null,
       "enabled": true
     }
   ]

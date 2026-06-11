@@ -54,6 +54,14 @@ This file documents all MCP (Model Context Protocol) servers and tools available
 - **Setup guide:** `setup/SETUP-ODOO-MCP.md`
 - **Notes:** Self-hosted Odoo instance. No Python equivalent needed — use this MCP for all Odoo interactions.
 
+### Fathom AI
+- **Status:** active
+- **MCP type:** Remote HTTP — hosted by Fathom, authenticated via API key
+- **Purpose:** Access Fathom AI meeting recordings, transcripts, summaries, and action items
+- **Key tools:** meeting recordings, transcripts, summaries, action items, teams, webhooks
+- **Config:** Registered in `.mcp.json` as `"fathom"` with `X-Api-Key` header; synced to `~/.claude.json` by `install.py`
+- **Notes:** API key is user-scoped — only accesses meetings recorded by or shared with this user
+
 ---
 
 ## Notes
