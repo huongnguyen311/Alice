@@ -222,6 +222,14 @@
       "enabled": true
     },
     {
+      "name": "alice-design-review-expert",
+      "file": "alice-design-review-expert.md",
+      "type": "mcp",
+      "mcp_required": null,
+      "warning": null,
+      "enabled": true
+    },
+    {
       "name": "responsive-layout",
       "file": "responsive-layout.md",
       "type": "mcp",
@@ -241,6 +249,39 @@
       "name": "Alice_UX-UI-design-master",
       "file": "Alice_UX-UI-design-master.md",
       "type": "mcp",
+      "mcp_required": null,
+      "warning": null,
+      "enabled": true
+    },
+    {
+      "_comment": "System/meta skills",
+      "name": "alice-init",
+      "file": "alice-init.md",
+      "type": "python",
+      "mcp_required": null,
+      "warning": null,
+      "enabled": true
+    },
+    {
+      "name": "alice-project-bind",
+      "file": "alice-project-bind.md",
+      "type": "mcp",
+      "mcp_required": "odoo",
+      "warning": null,
+      "enabled": true
+    },
+    {
+      "name": "alice-run-automation",
+      "file": "alice-run-automation.md",
+      "type": "python",
+      "mcp_required": null,
+      "warning": null,
+      "enabled": true
+    },
+    {
+      "name": "alice-suggest-meal",
+      "file": "alice-suggest-meal.md",
+      "type": "python",
       "mcp_required": null,
       "warning": null,
       "enabled": true

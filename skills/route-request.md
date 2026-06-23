@@ -72,6 +72,7 @@ Known trigger patterns (from skill frontmatter):
 | `ux-writing.md` | meta | "write microcopy", "ux copy", "ux writing", "button labels", "error message copy", "empty state copy", "confirmation dialog copy", "placeholder text", "tooltip copy", "loading state copy", "onboarding hints", "microcopy" |
 | `motion-design.md` | meta | "animation spec", "motion spec", "animate a component", "easing", "entrance animation", "exit animation", "transition duration", "reduced motion", "motion design" |
 | `figma-specs.md` | meta | "figma spec", "figma handoff", "developer handoff", "component spec", "auto layout spec", "layer structure", "token references", "figma specs", "design spec", "handoff documentation" |
+| `alice-design-review-expert.md` | design | "review design", "design review", "review this page", "review landing page", "review website", "review this design", "cro review", "conversion review", "marketing review", "audit design", "audit landing page", "đánh giá thiết kế", "review thiết kế", "đánh giá trang", "chấm điểm thiết kế" |
 
 > Update this table whenever a new skill is added with `triggers:` frontmatter.
 
